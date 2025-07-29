@@ -10,12 +10,9 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession()
 
-  // Protect routes under /checkout, /event, /my-profile, /my-tickets
   const protectedRoutes = [
-    '/checkout',
-    '/event',
-    '/my-profile',
-    '/my-tickets',
+    '/admin/dashboard',
+    '/admin/scan',
   ]
 
   const isProtected = protectedRoutes.some((route) =>
@@ -33,9 +30,7 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    '/checkout/:path*',
-    '/event/:path*',
-    '/my-profile/:path*',
-    '/my-tickets/:path*',
+    '/admin/dashboard',
+    '/admin/scan',
   ],
 }
