@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Tickets | Raaga Experience",
+  title: "Admin | Raaga Experience",
   description: "Book your tickets for the Raaga Experience now!",
 };
 
