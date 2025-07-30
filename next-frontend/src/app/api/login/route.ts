@@ -1,26 +1,30 @@
-// app/api/login/route.ts
-import { NextResponse } from 'next/server';
-import supabase from '@/lib/utils/supabaseClient';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
-  const body = await req.json();
-  const { email, password } = body;
+  const supabase = createRouteHandlerClient({ cookies })
+  const body = await req.json()
+  const { email, secretKey } = body
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-  if (error || !data.session) {
-    return NextResponse.json({ success: false, error: error?.message || 'Login failed' }, { status: 401 });
+  if (secretKey !== process.env.ADMIN_SECRET_KEY) {
+    return NextResponse.json({ message: 'Invalid secret key' }, { status: 401 })
   }
 
-  const res = NextResponse.json({ success: true });
+  const { data, error } = await supabase
+    .from('admin_users')
+    .select('*')
+    .eq('email', email)
+    .single()
 
-  res.cookies.set('token', data.session.access_token, {
-    httpOnly: true,
-    path: '/',
-    maxAge: 60 * 60 * 24, // 1 day
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-  });
+  if (error || !data) {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+  }
 
-  return res;
+  const { error: authError } = await supabase.auth.signInWithOtp({ email })
+  if (authError) {
+    return NextResponse.json({ message: 'Failed to send login link' }, { status: 500 })
+  }
+
+  return NextResponse.json({ message: 'Magic link sent to email' })
 }
