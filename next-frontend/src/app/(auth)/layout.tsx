@@ -12,11 +12,6 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Tickets | Raaga Experience",
-  description: "Book your tickets for the Raaga Experience now!",
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
