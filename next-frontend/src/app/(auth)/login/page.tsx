@@ -10,7 +10,7 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const searchParams = useSearchParams()
-  const redirect = searchParams.get('redirect') || '/admin/dashboarh'
+  const redirect = searchParams.get('redirect') || '/admin/dashboard'
 
   const login = async () => {
     if (!email || !password) {
