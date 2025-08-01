@@ -1,122 +1,117 @@
-// app/(auth)/login/page.tsx - Simplified approach
 'use client'
-import { useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import supabase from '@/lib/utils/supabaseClient'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const router = useRouter()
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect') || '/admin/dashboard'
 
-  const login = async () => {
-    if (!email || !password) {
-      setError('Please fill in all fields')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    const { data, error: loginError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (loginError) {
+      setError('Invalid email or password')
+      setLoading(false)
       return
     }
 
-    setLoading(true)
-    setError('')
+    if (data.user && data.session) {
+      console.log('✅ Login successful - Session created')
 
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password
-      })
+      const userId = data.user.id
 
-      if (error) {
-        console.error('❌ Login error:', error)
-        setError(error.message)
+      // 🚨 Admin check
+      const { data: adminData, error: adminError } = await supabase
+        .from('admins')
+        .select('admin_id')
+        .eq('admin_id', userId)
+        .single()
+
+      if (!adminData || adminError) {
+        console.error('❌ Not an admin or failed to verify:', adminError)
+        setError('You are not authorized to access the admin dashboard.')
         setLoading(false)
         return
       }
 
-      if (data.user && data.session) {
-        console.log('✅ Login successful - Session created')
-
-        const userId = data.user.id
-        const redirectPath = redirect === '/admin/dashboard'
-          ? `/admin/dashboard`
-          : redirect
-
-        // Ensure session is saved
-        let sessionReady = false
-        let attempts = 0
-        const maxAttempts = 20
-
-        while (!sessionReady && attempts < maxAttempts) {
-          attempts++
-          try {
-            const { data: { session: currentSession } } = await supabase.auth.getSession()
-            if (currentSession && currentSession.access_token) {
-              console.log('✅ Session confirmed ready after', attempts * 100, 'ms')
-              sessionReady = true
-              break
-            }
-          } catch (err) {
-            console.log('Session check attempt', attempts, 'failed')
+      // Wait for Supabase to persist session in cookies before redirecting
+      const { data: sessionData } = await supabase.auth.getSession()
+      if (sessionData.session) {
+        router.replace(redirect)
+      } else {
+        const unsub = supabase.auth.onAuthStateChange((event, session) => {
+          if (event === 'SIGNED_IN' && session) {
+            router.replace(redirect)
+            unsub.data.subscription.unsubscribe()
           }
-          await new Promise(resolve => setTimeout(resolve, 100))
-        }
-
-        if (sessionReady) {
-          console.log('🚀 Redirecting to:', redirectPath)
-          window.location.replace(redirectPath)
-        } else {
-          console.log('⚠️ Session not ready, using fallback redirect')
-          setTimeout(() => {
-            window.location.replace(redirectPath)
-          }, 2000)
-        }
+        })
       }
-    } catch (err) {
-      console.error('💥 Unexpected login error:', err)
-      setError('An unexpected error occurred. Please try again.')
-      setLoading(false)
     }
-  }
 
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      login()
-    }
+    setLoading(false)
   }
 
   return (
-    <div className="p-6 max-w-md mx-auto">
-      <h2 className="text-xl font-semibold mb-4">Login</h2>
-
-      <input
-        className="w-full p-2 border mb-2 rounded"
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        onKeyPress={handleKeyPress}
-        disabled={loading}
-      />
-      <input
-        className="w-full p-2 border mb-4 rounded"
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        onKeyPress={handleKeyPress}
-        disabled={loading}
-      />
-      <button
-        onClick={login}
-        disabled={loading}
-        className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
+      <form
+        onSubmit={handleLogin}
+        className="bg-white shadow-md rounded-lg p-8 max-w-md w-full"
       >
-        {loading ? 'Logging in...' : 'Login'}
-      </button>
+        <h1 className="text-2xl font-bold mb-6 text-center">Admin Login</h1>
 
-      {error && <p className="text-red-500 mt-2 text-sm">{error}</p>}
+        {error && (
+          <div className="bg-red-100 text-red-700 p-3 rounded mb-4">{error}</div>
+        )}
+
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-semibold mb-2">
+            Email
+          </label>
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div className="mb-6">
+          <label className="block text-gray-700 text-sm font-semibold mb-2">
+            Password
+          </label>
+          <input
+            type="password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition"
+        >
+          {loading ? 'Logging in...' : 'Login'}
+        </button>
+      </form>
     </div>
   )
 }
