@@ -1,19 +1,9 @@
 'use client'
 
+import { Booking } from '@/lib/types/types'
 import { useEffect, useState } from 'react'
 import { FaSave } from 'react-icons/fa'
-
-type Booking = {
-  ticket_id: string
-  name: string
-  email: string
-  phone: string
-  category: string
-  qr_code_url: string
-  seat_number: string
-  event_id: string
-  event_name: string
-}
+import { generateTicketPDFBlob } from '@/lib/pdf/ticketPDF'
 
 function AdminDashboard() {
   const [bookings, setBookings] = useState<Booking[]>([])
@@ -59,17 +49,30 @@ function AdminDashboard() {
       const result = await res.json()
       if (!res.ok) throw new Error(result.error || 'Failed to assign seat')
 
+      // Update local state
       setBookings((prev) =>
         prev.map((b) =>
           b.ticket_id === ticketId
             ? {
-              ...b,
-              seat_number: updatedSeat,
-              qr_code_url: result.qr_code_url || b.qr_code_url,
-            }
+                ...b,
+                seat_number: updatedSeat,
+                qr_code_url: result.qr_code_url || b.qr_code_url,
+                ticket_pdf_url: result.ticket_pdf_url || b.ticket_pdf_url,
+              }
             : b
         )
       )
+
+      const updatedBooking = bookings.find((b) => b.ticket_id === ticketId)
+      if (updatedBooking) {
+        generateTicketPDFBlob(
+          {
+            ...updatedBooking,
+            seat_number: updatedSeat,
+          },
+          result.qr_data_url
+        )
+      }
 
       setEditedSeats((prev) => {
         const updated = { ...prev }
@@ -96,7 +99,7 @@ function AdminDashboard() {
               <th className="px-3 py-2 border">Email</th>
               <th className="px-3 py-2 border">Category</th>
               <th className="px-3 py-2 border">Event Name</th>
-              <th className="px-3 py-2 border">QR</th>
+              <th className="px-3 py-2 border">Ticket</th>
               <th className="px-3 py-2 border">Seat Number</th>
               <th className="px-3 py-2 border">Action</th>
             </tr>
@@ -122,17 +125,17 @@ function AdminDashboard() {
                     <td className="border px-3 py-2">{b.category}</td>
                     <td className="border px-3 py-2">{b.event_name}</td>
                     <td className="border px-3 py-2">
-                      {b.qr_code_url ? (
+                      {b.ticket_pdf_url ? (
                         <a
-                          href={b.qr_code_url}
+                          href={b.ticket_pdf_url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-600 underline"
                         >
-                          View QR
+                          View PDF
                         </a>
                       ) : (
-                        <span className="text-gray-400">No QR</span>
+                        <span className="text-gray-400">No PDF</span>
                       )}
                     </td>
                     <td className="border px-3 py-2">
@@ -147,10 +150,11 @@ function AdminDashboard() {
                     </td>
                     <td className="border px-3 py-2 text-center">
                       <button
-                        className={`p-2 rounded text-white ${b.seat_number
-                          ? 'bg-gray-400 cursor-not-allowed'
-                          : 'bg-green-500 hover:bg-green-600'
-                          }`}
+                        className={`p-2 rounded text-white ${
+                          b.seat_number
+                            ? 'bg-gray-400 cursor-not-allowed'
+                            : 'bg-green-500 hover:bg-green-600'
+                        }`}
                         onClick={() => handleSave(b.ticket_id)}
                         disabled={!!b.seat_number}
                       >

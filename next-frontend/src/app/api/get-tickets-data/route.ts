@@ -12,6 +12,7 @@ export async function GET() {
             phone,
             category,
             qr_code_url,
+            ticket_pdf_url,
             seat_number,
             event_id
         `)
@@ -37,6 +38,5 @@ export async function GET() {
             }
         })
     )
-    console.log(formatted)
     return NextResponse.json(formatted)
 }

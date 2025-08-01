@@ -1,12 +1,13 @@
 import supabase from '@/lib/utils/supabaseClient'
 import { NextRequest, NextResponse } from 'next/server'
 import QRCode from 'qrcode'
+import { jsPDF } from 'jspdf'
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
   const { ticket_id, seat_number } = body
 
-  // 1. Fetch ticket + event
+  // 1. Fetch ticket and event
   const { data: ticket, error: ticketError } = await supabase
     .from('tickets')
     .select('*, events(name)')
@@ -17,46 +18,64 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: ticketError }, { status: 404 })
   }
 
-  // 2. Generate QR as PNG buffer
-  const buffer = await QRCode.toBuffer(ticket_id, { type: 'png' })
+  // 2. Generate QR Code (in-memory only)
+  const qrDataURL = await QRCode.toDataURL(ticket_id)
 
-  // 3. Upload to Supabase Storage
-  const fileName = `qr-${ticket_id}.png`
+  // 3. Generate PDF with QR embedded
+  const doc = new jsPDF()
+  doc.setFontSize(16)
+  doc.text('Event Ticket', 20, 20)
 
-  const { error: uploadError } = await supabase.storage
+  doc.setFontSize(12)
+  doc.text(`Name: ${ticket.name}`, 20, 40)
+  doc.text(`Email: ${ticket.email}`, 20, 50)
+  doc.text(`Phone: ${ticket.phone}`, 20, 60)
+  doc.text(`Category: ${ticket.category}`, 20, 70)
+  doc.text(`Event: ${ticket.events.name}`, 20, 80)
+  doc.text(`Seat Number: ${seat_number}`, 20, 90)
+  doc.addImage(qrDataURL, 'PNG', 150, 10, 50, 50)
+
+  const pdfBlob = doc.output('blob')
+  const pdfArrayBuffer = await pdfBlob.arrayBuffer()
+  const pdfBuffer = Buffer.from(pdfArrayBuffer)
+
+  // 4. Upload PDF to Supabase Storage
+  const pdfFileName = `pdf-${ticket_id}.pdf`
+  const { error: pdfUploadError } = await supabase.storage
     .from('qr-codes')
-    .upload(fileName, buffer, {
-      contentType: 'image/png',
+    .upload(pdfFileName, pdfBuffer, {
+      contentType: 'application/pdf',
       upsert: true,
     })
 
-  if (uploadError) {
-    console.error('Upload Error:', uploadError)
-    return NextResponse.json({ error: 'Failed to upload QR code to storage' }, { status: 500 })
+  if (pdfUploadError) {
+    console.error('PDF Upload Error:', pdfUploadError)
+    return NextResponse.json({ error: pdfUploadError }, { status: 500 })
   }
 
-  // 4. Get public URL
+  // 5. Get public URL of PDF
   const {
-    data: { publicUrl },
-  } = supabase.storage.from('qr-codes').getPublicUrl(fileName)
+    data: { publicUrl: pdfPublicUrl },
+  } = supabase.storage.from('qr-codes').getPublicUrl(pdfFileName)
 
-  // 5. Update ticket record
+  // 6. Update ticket
   const { error: updateError } = await supabase
     .from('tickets')
     .update({
       seat_number,
-      qr_code_url: publicUrl,
+      ticket_pdf_url: pdfPublicUrl,
     })
     .eq('ticket_id', ticket_id)
 
   if (updateError) {
-    return NextResponse.json({ error: 'Failed to update ticket with QR URL' }, { status: 500 })
+    console.error('Error updating ticket:', updateError)
+    return NextResponse.json({ error: updateError }, { status: 500 })
   }
 
-  // 6. Return the public URL of the QR
+  // 7. Return response
   return NextResponse.json({
     success: true,
-    qr_code_url: publicUrl,
-    filename: fileName,
+    pdf_url: pdfPublicUrl,
+    pdf_filename: pdfFileName,
   })
 }

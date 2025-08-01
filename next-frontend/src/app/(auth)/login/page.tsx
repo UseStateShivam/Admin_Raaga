@@ -10,7 +10,7 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const searchParams = useSearchParams()
-  const redirect = searchParams.get('redirect') || '/my-profile'
+  const redirect = searchParams.get('redirect') || '/admin/dashboarh'
 
   const login = async () => {
     if (!email || !password) {
@@ -38,8 +38,8 @@ export default function LoginPage() {
         console.log('✅ Login successful - Session created')
 
         const userId = data.user.id
-        const redirectPath = redirect === '/my-profile'
-          ? `/my-profile/${userId}`
+        const redirectPath = redirect === '/admin/dashboard'
+          ? `/admin/dashboard`
           : redirect
 
         // Ensure session is saved
