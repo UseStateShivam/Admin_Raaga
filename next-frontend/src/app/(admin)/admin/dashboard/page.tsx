@@ -3,7 +3,6 @@
 import { Booking } from '@/lib/types/types'
 import { useEffect, useState } from 'react'
 import { FaSave } from 'react-icons/fa'
-import { generateTicketPDFBlob } from '@/lib/pdf/ticketPDF'
 
 function AdminDashboard() {
   const [bookings, setBookings] = useState<Booking[]>([])
@@ -49,30 +48,18 @@ function AdminDashboard() {
       const result = await res.json()
       if (!res.ok) throw new Error(result.error || 'Failed to assign seat')
 
-      // Update local state
+      // ✅ Update state with new seat number and ticket PDF URL
       setBookings((prev) =>
         prev.map((b) =>
           b.ticket_id === ticketId
             ? {
-                ...b,
-                seat_number: updatedSeat,
-                qr_code_url: result.qr_code_url || b.qr_code_url,
-                ticket_pdf_url: result.ticket_pdf_url || b.ticket_pdf_url,
-              }
+              ...b,
+              seat_number: updatedSeat,
+              ticket_pdf_url: result.ticket_pdf_url || b.ticket_pdf_url,
+            }
             : b
         )
       )
-
-      const updatedBooking = bookings.find((b) => b.ticket_id === ticketId)
-      if (updatedBooking) {
-        generateTicketPDFBlob(
-          {
-            ...updatedBooking,
-            seat_number: updatedSeat,
-          },
-          result.qr_data_url
-        )
-      }
 
       setEditedSeats((prev) => {
         const updated = { ...prev }
@@ -150,12 +137,14 @@ function AdminDashboard() {
                     </td>
                     <td className="border px-3 py-2 text-center">
                       <button
-                        className={`p-2 rounded text-white ${
-                          b.seat_number
+                        className={`p-2 rounded text-white ${b.seat_number
                             ? 'bg-gray-400 cursor-not-allowed'
                             : 'bg-green-500 hover:bg-green-600'
-                        }`}
-                        onClick={() => handleSave(b.ticket_id)}
+                          }`}
+                        onClick={async () => {
+                          await handleSave(b.ticket_id)
+                          window.location.reload()
+                        }}
                         disabled={!!b.seat_number}
                       >
                         <FaSave />

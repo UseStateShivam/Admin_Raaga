@@ -24,7 +24,6 @@ export async function POST(req: Request) {
     confirmation_sent: false,
     qr_sent: false,
     seat_number: null,
-    qr_code_url: null,
     ticket_pdf_url: null,
   }));
 

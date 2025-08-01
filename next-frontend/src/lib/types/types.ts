@@ -27,7 +27,6 @@ export type Booking = {
   email: string
   phone: string
   category: string
-  qr_code_url: string
   ticket_pdf_url: string
   seat_number: string
   event_id: string

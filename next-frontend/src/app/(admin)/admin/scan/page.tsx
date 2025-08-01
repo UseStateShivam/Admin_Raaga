@@ -11,7 +11,6 @@ type Ticket = {
   category: string
   status: string
   seat_number: string
-  qr_code_url: string
   ticket_id: string
 }
 

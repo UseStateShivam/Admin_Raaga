@@ -11,7 +11,6 @@ export async function GET() {
             email,
             phone,
             category,
-            qr_code_url,
             ticket_pdf_url,
             seat_number,
             event_id
