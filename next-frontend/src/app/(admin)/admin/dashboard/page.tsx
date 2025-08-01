@@ -63,10 +63,10 @@ function AdminDashboard() {
         prev.map((b) =>
           b.ticket_id === ticketId
             ? {
-                ...b,
-                seat_number: updatedSeat,
-                qr_code_url: result.qr_code_url || b.qr_code_url,
-              }
+              ...b,
+              seat_number: updatedSeat,
+              qr_code_url: result.qr_code_url || b.qr_code_url,
+            }
             : b
         )
       )
@@ -102,52 +102,65 @@ function AdminDashboard() {
             </tr>
           </thead>
           <tbody>
-            {bookings.map((b) => (
-              <tr key={b.ticket_id} className="text-sm text-gray-800">
-                <td className="border px-3 py-2">{b.name}</td>
-                <td className="border px-3 py-2">{b.phone}</td>
-                <td className="border px-3 py-2">{b.email}</td>
-                <td className="border px-3 py-2">{b.category}</td>
-                <td className="border px-3 py-2">{b.event_name}</td>
-                <td className="border px-3 py-2">
-                  {b.qr_code_url ? (
-                    <a
-                      href={b.qr_code_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 underline"
-                    >
-                      View QR
-                    </a>
-                  ) : (
-                    <span className="text-gray-400">No QR</span>
-                  )}
-                </td>
-                <td className="border px-3 py-2">
-                  <input
-                    type="text"
-                    className="border rounded px-2 py-1 text-sm w-full disabled:bg-gray-100"
-                    value={editedSeats[b.ticket_id] ?? b.seat_number}
-                    onChange={(e) => handleSeatChange(b.ticket_id, e.target.value)}
-                    disabled={!!b.seat_number}
-                    placeholder="Assign seat"
-                  />
-                </td>
-                <td className="border px-3 py-2 text-center">
-                  <button
-                    className={`p-2 rounded text-white ${
-                      b.seat_number
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : 'bg-green-500 hover:bg-green-600'
-                    }`}
-                    onClick={() => handleSave(b.ticket_id)}
-                    disabled={!!b.seat_number}
-                  >
-                    <FaSave />
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {(() => {
+              let lastEmail = ''
+              let isAlt = false
+
+              return bookings.map((b) => {
+                if (b.email !== lastEmail) {
+                  isAlt = !isAlt
+                  lastEmail = b.email
+                }
+
+                const rowClass = isAlt ? 'bg-white' : 'bg-gray-50'
+
+                return (
+                  <tr key={b.ticket_id} className={`${rowClass} text-sm text-gray-800`}>
+                    <td className="border px-3 py-2">{b.name}</td>
+                    <td className="border px-3 py-2">{b.phone}</td>
+                    <td className="border px-3 py-2">{b.email}</td>
+                    <td className="border px-3 py-2">{b.category}</td>
+                    <td className="border px-3 py-2">{b.event_name}</td>
+                    <td className="border px-3 py-2">
+                      {b.qr_code_url ? (
+                        <a
+                          href={b.qr_code_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 underline"
+                        >
+                          View QR
+                        </a>
+                      ) : (
+                        <span className="text-gray-400">No QR</span>
+                      )}
+                    </td>
+                    <td className="border px-3 py-2">
+                      <input
+                        type="text"
+                        className="border rounded px-2 py-1 text-sm w-full disabled:bg-gray-100"
+                        value={editedSeats[b.ticket_id] ?? b.seat_number}
+                        onChange={(e) => handleSeatChange(b.ticket_id, e.target.value)}
+                        disabled={!!b.seat_number}
+                        placeholder="Assign seat"
+                      />
+                    </td>
+                    <td className="border px-3 py-2 text-center">
+                      <button
+                        className={`p-2 rounded text-white ${b.seat_number
+                          ? 'bg-gray-400 cursor-not-allowed'
+                          : 'bg-green-500 hover:bg-green-600'
+                          }`}
+                        onClick={() => handleSave(b.ticket_id)}
+                        disabled={!!b.seat_number}
+                      >
+                        <FaSave />
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })
+            })()}
           </tbody>
         </table>
       </div>

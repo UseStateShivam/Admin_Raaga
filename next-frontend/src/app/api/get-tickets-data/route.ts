@@ -15,7 +15,8 @@ export async function GET() {
             seat_number,
             event_id
         `)
-
+        .order('email', { ascending: true })
+        
     if (error) {
         console.error('Error fetching tickets:', error.message)
         return NextResponse.json({ error: 'Failed to fetch tickets' }, { status: 500 })
