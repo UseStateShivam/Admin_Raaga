@@ -50,7 +50,7 @@ function AdminDashboard() {
     const updatedSeat = editedSeats[ticketId]
 
     try {
-      const res = await fetch('/api/post-seat-assign', {
+      const res = await fetch('/api/seat-assign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticket_id: ticketId, seat_number: updatedSeat }),
@@ -59,20 +59,18 @@ function AdminDashboard() {
       const result = await res.json()
       if (!res.ok) throw new Error(result.error || 'Failed to assign seat')
 
-      // ✅ Update booking in state with new seat and QR code URL
       setBookings((prev) =>
         prev.map((b) =>
           b.ticket_id === ticketId
             ? {
-              ...b,
-              seat_number: updatedSeat,
-              qr_code_url: result.qr_code_url || b.qr_code_url,
-            }
+                ...b,
+                seat_number: updatedSeat,
+                qr_code_url: result.qr_code_url || b.qr_code_url,
+              }
             : b
         )
       )
 
-      // ✅ Clear the edited input
       setEditedSeats((prev) => {
         const updated = { ...prev }
         delete updated[ticketId]
@@ -83,14 +81,12 @@ function AdminDashboard() {
     }
   }
 
-
   if (loading) return <p className="p-8 text-gray-700">Loading...</p>
   if (error) return <p className="p-8 text-red-600">Error: {error}</p>
 
   return (
     <main className="min-h-screen bg-gray-100 p-8">
       <h1 className="text-2xl font-bold mb-6">🎫 Admin Dashboard</h1>
-
       <div className="overflow-x-auto">
         <table className="w-full border border-gray-300 bg-white shadow-md">
           <thead className="bg-gray-200 text-sm text-gray-700">
@@ -124,7 +120,7 @@ function AdminDashboard() {
                       View QR
                     </a>
                   ) : (
-                    <span className="text-gray-400 cursor-not-allowed">No QR</span>
+                    <span className="text-gray-400">No QR</span>
                   )}
                 </td>
                 <td className="border px-3 py-2">
@@ -132,19 +128,18 @@ function AdminDashboard() {
                     type="text"
                     className="border rounded px-2 py-1 text-sm w-full disabled:bg-gray-100"
                     value={editedSeats[b.ticket_id] ?? b.seat_number}
-                    onChange={(e) =>
-                      handleSeatChange(b.ticket_id, e.target.value)
-                    }
+                    onChange={(e) => handleSeatChange(b.ticket_id, e.target.value)}
                     disabled={!!b.seat_number}
                     placeholder="Assign seat"
                   />
                 </td>
                 <td className="border px-3 py-2 text-center">
                   <button
-                    className={`p-2 rounded text-white ${b.seat_number
-                      ? 'bg-gray-400 cursor-not-allowed'
-                      : 'bg-green-500 hover:bg-green-600'
-                      }`}
+                    className={`p-2 rounded text-white ${
+                      b.seat_number
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-green-500 hover:bg-green-600'
+                    }`}
                     onClick={() => handleSave(b.ticket_id)}
                     disabled={!!b.seat_number}
                   >
