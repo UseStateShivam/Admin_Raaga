@@ -13,7 +13,8 @@ export async function GET() {
             category,
             ticket_pdf_url,
             seat_number,
-            event_id
+            event_id,
+            ticket_sent
         `)
         .order('email', { ascending: true })
         

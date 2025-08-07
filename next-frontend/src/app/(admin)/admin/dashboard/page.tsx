@@ -2,7 +2,7 @@
 
 import { Booking } from '@/lib/types/types'
 import { useEffect, useState } from 'react'
-import { FaSave } from 'react-icons/fa'
+import { FaSave, FaEnvelope } from 'react-icons/fa'
 
 function AdminDashboard() {
   const [bookings, setBookings] = useState<Booking[]>([])
@@ -48,7 +48,6 @@ function AdminDashboard() {
       const result = await res.json()
       if (!res.ok) throw new Error(result.error || 'Failed to assign seat')
 
-      // ✅ Update state with new seat number and ticket PDF URL
       setBookings((prev) =>
         prev.map((b) =>
           b.ticket_id === ticketId
@@ -71,6 +70,28 @@ function AdminDashboard() {
     }
   }
 
+  const handleSendTicket = async (ticket: Booking) => {
+    try {
+      const res = await fetch('/api/send-ticket', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticket_id: ticket.ticket_id }), // ✅ only send ID
+      })
+
+      const result = await res.json()
+      if (!res.ok) throw new Error(result.error || 'Failed to send ticket')
+
+      setBookings((prev) =>
+        prev.map((b) =>
+          b.ticket_id === ticket.ticket_id ? { ...b, ticket_sent: true } : b
+        )
+      )
+    } catch (err) {
+      console.error('Error sending ticket:', err)
+    }
+  }
+
+
   if (loading) return <p className="p-8 text-gray-700">Loading...</p>
   if (error) return <p className="p-8 text-red-600">Error: {error}</p>
 
@@ -89,6 +110,7 @@ function AdminDashboard() {
               <th className="px-3 py-2 border">Ticket</th>
               <th className="px-3 py-2 border">Seat Number</th>
               <th className="px-3 py-2 border">Action</th>
+              <th className="px-3 py-2 border">Send Ticket</th>
             </tr>
           </thead>
           <tbody>
@@ -103,6 +125,7 @@ function AdminDashboard() {
                 }
 
                 const rowClass = isAlt ? 'bg-white' : 'bg-gray-50'
+                const canSendTicket = !!b.ticket_pdf_url && !b.ticket_sent
 
                 return (
                   <tr key={b.ticket_id} className={`${rowClass} text-sm text-gray-800`}>
@@ -138,8 +161,8 @@ function AdminDashboard() {
                     <td className="border px-3 py-2 text-center">
                       <button
                         className={`p-2 rounded text-white ${b.seat_number
-                            ? 'bg-gray-400 cursor-not-allowed'
-                            : 'bg-green-500 hover:bg-green-600'
+                          ? 'bg-gray-400 cursor-not-allowed'
+                          : 'bg-green-500 hover:bg-green-600'
                           }`}
                         onClick={async () => {
                           await handleSave(b.ticket_id)
@@ -148,6 +171,19 @@ function AdminDashboard() {
                         disabled={!!b.seat_number}
                       >
                         <FaSave />
+                      </button>
+                    </td>
+                    <td className="border px-3 py-2 text-center">
+                      <button
+                        className={`p-2 rounded text-white ${canSendTicket
+                          ? 'bg-blue-500 hover:bg-blue-600'
+                          : 'bg-gray-400 cursor-not-allowed'
+                          }`}
+                        onClick={() => handleSendTicket(b)}
+                        disabled={!canSendTicket}
+                      >
+                        <FaEnvelope className="inline-block mr-1" />
+                        E-Mail
                       </button>
                     </td>
                   </tr>

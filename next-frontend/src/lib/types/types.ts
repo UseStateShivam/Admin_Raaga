@@ -31,4 +31,5 @@ export type Booking = {
   seat_number: string
   event_id: string
   event_name: string
+  ticket_sent: boolean
 }
