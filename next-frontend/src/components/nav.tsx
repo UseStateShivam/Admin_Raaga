@@ -30,24 +30,21 @@ function Nav() {
   }
 
   return (
-    <nav className="flex items-center justify-between p-4 bg-gray-100">
+    <nav className="flex items-center justify-between p-4 bg-black text-white">
       <ul className="flex space-x-4">
-        <li><a href="/">Home</a></li>
-        <li><a href="/event">Events</a></li>
-        <li><a href="/about">Buy Tickets</a></li>
-        <li>
-          <button
-            onClick={handleLogout}
-            className="text-red-500 hover:underline"
-          >
-            Logout
-          </button>
-        </li>
+        <li><a href="/admin/scan">Scan</a></li>
+        <li><a href="/admin/dashboard">Dashboard</a></li>
       </ul>
 
       {user ? (
-        <div className="text-sm text-gray-700">
-          Logged in as: <strong>{user.email?.split('@')[0]}</strong>
+        <div className="text-sm">
+          <strong>{user.email?.split('@')[0]}</strong>
+          <button
+            onClick={handleLogout}
+            className="text-red-500 hover:underline ml-2 cursor-pointer"
+          >
+            Logout
+          </button>
         </div>
       ) : (
         <div className="text-sm text-gray-500">Not logged in</div>

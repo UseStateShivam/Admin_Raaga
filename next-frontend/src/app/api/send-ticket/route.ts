@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
     // 2. Send email
     const sendResult = await resend.emails.send({
-      from: 'Tickets <write@raagaexperience.com>',
+      from: 'Tickets <tickets@raagaexperience.com>',
       to: email,
       subject: `🎟️ Your Ticket for ${eventName}`,
       html: `

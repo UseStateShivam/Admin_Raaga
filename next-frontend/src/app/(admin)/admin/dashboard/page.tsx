@@ -96,11 +96,11 @@ function AdminDashboard() {
   if (error) return <p className="p-8 text-red-600">Error: {error}</p>
 
   return (
-    <main className="min-h-screen bg-gray-100 p-8">
-      <h1 className="text-2xl font-bold mb-6">🎫 Admin Dashboard</h1>
+    <main className="min-h-screen bg-black p-8 text-white">
+      <h1 className="text-2xl font-bold mb-6 text white">🎫 Admin Dashboard</h1>
       <div className="overflow-x-auto">
         <table className="w-full border border-gray-300 bg-white shadow-md">
-          <thead className="bg-gray-200 text-sm text-gray-700">
+          <thead className="bg-black text-sm text-white">
             <tr>
               <th className="px-3 py-2 border">Holder Name</th>
               <th className="px-3 py-2 border">Phone</th>
@@ -124,60 +124,63 @@ function AdminDashboard() {
                   lastEmail = b.email
                 }
 
-                const rowClass = isAlt ? 'bg-white' : 'bg-gray-50'
+                const rowClass = isAlt ? 'bg-black' : 'bg-gray-50'
                 const canSendTicket = !!b.ticket_pdf_url && !b.ticket_sent
 
                 return (
-                  <tr key={b.ticket_id} className={`${rowClass} text-sm text-gray-800`}>
-                    <td className="border px-3 py-2">{b.name}</td>
-                    <td className="border px-3 py-2">{b.phone}</td>
-                    <td className="border px-3 py-2">{b.email}</td>
-                    <td className="border px-3 py-2">{b.category}</td>
-                    <td className="border px-3 py-2">{b.event_name}</td>
-                    <td className="border px-3 py-2">
+                  <tr
+                    key={b.ticket_id}
+                    className={`${rowClass} text-sm text-white bg-gray-900 border-gray-700`}
+                  >
+                    <td className="border border-gray-700 px-3 py-2">{b.name}</td>
+                    <td className="border border-gray-700 px-3 py-2">{b.phone}</td>
+                    <td className="border border-gray-700 px-3 py-2">{b.email}</td>
+                    <td className="border border-gray-700 px-3 py-2">{b.category}</td>
+                    <td className="border border-gray-700 px-3 py-2">{b.event_name}</td>
+                    <td className="border border-gray-700 px-3 py-2">
                       {b.ticket_pdf_url ? (
                         <a
                           href={b.ticket_pdf_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-600 underline"
+                          className="text-yellow-400 hover:text-yellow-300 underline"
                         >
                           View PDF
                         </a>
                       ) : (
-                        <span className="text-gray-400">No PDF</span>
+                        <span className="text-gray-500">No PDF</span>
                       )}
                     </td>
-                    <td className="border px-3 py-2">
+                    <td className="border border-gray-700 px-3 py-2">
                       <input
                         type="text"
-                        className="border rounded px-2 py-1 text-sm w-full disabled:bg-gray-100"
+                        className="border border-gray-600 bg-gray-800 text-white rounded px-2 py-1 text-sm w-full disabled:bg-gray-700"
                         value={editedSeats[b.ticket_id] ?? b.seat_number}
                         onChange={(e) => handleSeatChange(b.ticket_id, e.target.value)}
                         disabled={!!b.seat_number}
                         placeholder="Assign seat"
                       />
                     </td>
-                    <td className="border px-3 py-2 text-center">
+                    <td className="border border-gray-700 px-3 py-2 text-center">
                       <button
                         className={`p-2 rounded text-white ${b.seat_number
-                          ? 'bg-gray-400 cursor-not-allowed'
-                          : 'bg-green-500 hover:bg-green-600'
+                          ? 'bg-gray-600 cursor-not-allowed'
+                          : 'bg-green-600 hover:bg-green-500'
                           }`}
                         onClick={async () => {
-                          await handleSave(b.ticket_id)
-                          window.location.reload()
+                          await handleSave(b.ticket_id);
+                          window.location.reload();
                         }}
                         disabled={!!b.seat_number}
                       >
                         <FaSave />
                       </button>
                     </td>
-                    <td className="border px-3 py-2 text-center">
+                    <td className="border border-gray-700 px-3 py-2 text-center">
                       <button
                         className={`p-2 rounded text-white ${canSendTicket
-                          ? 'bg-blue-500 hover:bg-blue-600'
-                          : 'bg-gray-400 cursor-not-allowed'
+                          ? 'bg-blue-600 hover:bg-blue-500'
+                          : 'bg-gray-600 cursor-not-allowed'
                           }`}
                         onClick={() => handleSendTicket(b)}
                         disabled={!canSendTicket}
@@ -187,7 +190,7 @@ function AdminDashboard() {
                       </button>
                     </td>
                   </tr>
-                )
+                );
               })
             })()}
           </tbody>
