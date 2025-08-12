@@ -1,11 +1,11 @@
 'use client'
 
-import { Booking } from '@/lib/types/types'
+import { Ticket } from '@/lib/types/types'
 import { useEffect, useState } from 'react'
 import { FaSave, FaEnvelope } from 'react-icons/fa'
 
 function AdminDashboard() {
-  const [bookings, setBookings] = useState<Booking[]>([])
+  const [bookings, setBookings] = useState<Ticket[]>([])
   const [editedSeats, setEditedSeats] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -70,7 +70,7 @@ function AdminDashboard() {
     }
   }
 
-  const handleSendTicket = async (ticket: Booking) => {
+  const handleSendTicket = async (ticket: Ticket) => {
     try {
       const res = await fetch('/api/send-ticket', {
         method: 'POST',
@@ -136,7 +136,7 @@ function AdminDashboard() {
                     <td className="border border-gray-700 px-3 py-2">{b.phone}</td>
                     <td className="border border-gray-700 px-3 py-2">{b.email}</td>
                     <td className="border border-gray-700 px-3 py-2">{b.category}</td>
-                    <td className="border border-gray-700 px-3 py-2">{b.event_name}</td>
+                    <td className="border border-gray-700 px-3 py-2">{b.events.name}</td>
                     <td className="border border-gray-700 px-3 py-2">
                       {b.ticket_pdf_url ? (
                         <a
