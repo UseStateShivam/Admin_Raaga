@@ -304,7 +304,82 @@ function AdminDashboard() {
     }
   }
 
-  if (loading) return <p className="p-8 text-[#4D4D4D]">Loading...</p>
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-black p-8 px-12 text-white mt-28">
+        <h1 className="text-3xl font-bold mb-3 text-[#E0AF41]">Admin Dashboard</h1>
+        <div className="overflow-x-auto">
+          {/* Top bar shimmer */}
+          <div className="flex flex-wrap items-center justify-between bg-black border border-[#4D4D4D] rounded-md px-4 py-3 mb-4">
+            <div className="shimmer-dark h-4 w-96 rounded"></div>
+            <div className="flex items-center gap-2 mt-2 sm:mt-0">
+              <div className="shimmer-dark h-8 w-32 rounded"></div>
+              <div className="shimmer-dark h-8 w-20 rounded"></div>
+            </div>
+          </div>
+          
+          {/* Results info shimmer */}
+          <div className="flex justify-between items-center mb-2">
+            <div className="shimmer-dark h-4 w-48 rounded"></div>
+            <div className="shimmer-dark h-4 w-24 rounded"></div>
+          </div>
+
+          {/* Table shimmer */}
+          <div className="w-full border border-[#4D4D4D] bg-white shadow-md">
+            {/* Header shimmer */}
+            <div className="bg-black px-3 py-4 border-b border-[#4D4D4D]">
+              <div className="grid grid-cols-11 gap-4">
+                <div className="shimmer-dark h-4 w-4 rounded"></div>
+                <div className="shimmer-dark h-4 w-16 rounded"></div>
+                <div className="shimmer-dark h-4 w-20 rounded"></div>
+                <div className="shimmer-dark h-4 w-16 rounded"></div>
+                <div className="shimmer-dark h-4 w-20 rounded"></div>
+                <div className="shimmer-dark h-4 w-16 rounded"></div>
+                <div className="shimmer-dark h-4 w-20 rounded"></div>
+                <div className="shimmer-dark h-4 w-12 rounded"></div>
+                <div className="shimmer-dark h-4 w-20 rounded"></div>
+                <div className="shimmer-dark h-4 w-12 rounded"></div>
+                <div className="shimmer-dark h-4 w-20 rounded"></div>
+              </div>
+            </div>
+            
+            {/* Rows shimmer */}
+            {Array.from({ length: 10 }).map((_, index) => (
+              <div key={index} className={`px-3 py-3 border-b border-[#4D4D4D] ${index % 2 === 0 ? 'bg-black' : 'bg-[#131313]'}`}>
+                <div className="grid grid-cols-11 gap-4 items-center">
+                  <div className="shimmer-dark h-4 w-4 rounded"></div>
+                  <div className="shimmer-dark h-4 w-8 rounded"></div>
+                  <div className="shimmer-dark h-4 w-24 rounded"></div>
+                  <div className="shimmer-dark h-4 w-20 rounded"></div>
+                  <div className="shimmer-dark h-4 w-32 rounded"></div>
+                  <div className="shimmer-dark h-4 w-16 rounded"></div>
+                  <div className="shimmer-dark h-4 w-28 rounded"></div>
+                  <div className="shimmer-dark h-4 w-16 rounded"></div>
+                  <div className="shimmer-dark h-6 w-20 rounded"></div>
+                  <div className="shimmer-dark h-8 w-8 rounded"></div>
+                  <div className="shimmer-dark h-8 w-16 rounded"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {/* Pagination shimmer */}
+          <div className="flex justify-between items-center mt-4 px-2">
+            <div className="shimmer-dark h-4 w-48 rounded"></div>
+            <div className="flex items-center space-x-2">
+              <div className="shimmer-dark h-8 w-12 rounded"></div>
+              <div className="shimmer-dark h-8 w-16 rounded"></div>
+              <div className="shimmer-dark h-8 w-8 rounded"></div>
+              <div className="shimmer-dark h-8 w-8 rounded"></div>
+              <div className="shimmer-dark h-8 w-8 rounded"></div>
+              <div className="shimmer-dark h-8 w-12 rounded"></div>
+              <div className="shimmer-dark h-8 w-12 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
   if (error) return <p className="p-8 text-red-600">Error: {error}</p>
 
   return (
@@ -496,7 +571,7 @@ function AdminDashboard() {
                       <input
                         type="text"
                         className="border-y border-gray-600 bg-gray-800 text-white rounded px-2 py-1 text-sm w-full disabled:bg-[#4D4D4D] disabled:cursor-not-allowed"
-                        value={editedSeats[b.ticket_id] ?? b.seat_number}
+                        value={editedSeats[b.ticket_id] ?? b.seat_number ?? ""}
                         onChange={(e) => handleSeatChange(b.ticket_id, e.target.value)}
                         disabled={!!b.seat_number}
                         placeholder="Assign seat"
