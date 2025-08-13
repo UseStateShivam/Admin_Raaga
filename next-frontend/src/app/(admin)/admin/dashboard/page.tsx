@@ -1,20 +1,32 @@
 'use client'
 
 import { Ticket } from '@/lib/types/types'
+import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
-import { FaSave, FaEnvelope } from 'react-icons/fa'
+import { FaSave, FaEnvelope, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa'
+
+type SortConfig = {
+  key: string | null
+  direction: 'asc' | 'desc' | null
+}
 
 function AdminDashboard() {
   const [bookings, setBookings] = useState<Ticket[]>([])
+  const [filteredBookings, setFilteredBookings] = useState<Ticket[]>([])
+  const [paginatedBookings, setPaginatedBookings] = useState<Ticket[]>([])
   const [editedSeats, setEditedSeats] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedRows, setSelectedRows] = useState<string[]>([]);
-  const headerCheckboxRef = useRef<HTMLInputElement>(null);
+  const [selectedRows, setSelectedRows] = useState<string[]>([])
+  const [searchTerm, setSearchTerm] = useState('')
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: null })
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(20)
+  const headerCheckboxRef = useRef<HTMLInputElement>(null)
 
   const exportSelectedRows = () => {
-    // Get selected booking data
-    const selectedBookings = bookings.filter(booking => 
+    // Get selected booking data from filtered results
+    const selectedBookings = filteredBookings.filter(booking =>
       selectedRows.includes(booking.ticket_id)
     );
 
@@ -26,7 +38,7 @@ function AdminDashboard() {
     // Prepare CSV data
     const csvHeaders = [
       'Serial Number',
-      'Holder Name', 
+      'Holder Name',
       'Phone',
       'Email',
       'Category',
@@ -53,7 +65,7 @@ function AdminDashboard() {
     // Create CSV content
     const csvContent = [
       csvHeaders.join(','),
-      ...csvData.map(row => 
+      ...csvData.map(row =>
         row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(',')
       )
     ].join('\n');
@@ -79,23 +91,137 @@ function AdminDashboard() {
   };
 
   const toggleAll = () => {
-    if (selectedRows.length === bookings.length) {
-      setSelectedRows([]);
+    const currentPageIds = paginatedBookings.map(b => b.ticket_id);
+    const allCurrentSelected = currentPageIds.every(id => selectedRows.includes(id));
+    
+    if (allCurrentSelected) {
+      // Deselect all on current page
+      setSelectedRows(prev => prev.filter(id => !currentPageIds.includes(id)));
     } else {
-      setSelectedRows(bookings.map(b => b.ticket_id));
+      // Select all on current page
+      setSelectedRows(prev => [...new Set([...prev, ...currentPageIds])]);
     }
   };
 
+  // Sorting function
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    
+    setSortConfig({ key, direction });
+  };
+
+  // Get sort icon
+  const getSortIcon = (columnKey: string) => {
+    if (sortConfig.key !== columnKey) {
+      return <FaSort className="inline ml-1 text-gray-400" />;
+    }
+    return sortConfig.direction === 'asc' 
+      ? <FaSortUp className="inline ml-1 text-[#E0AF41]" />
+      : <FaSortDown className="inline ml-1 text-[#E0AF41]" />;
+  };
+
+  // Sort, filter and paginate data
+  useEffect(() => {
+    let result = [...bookings];
+
+    // Apply search filter
+    if (searchTerm) {
+      result = result.filter(booking =>
+        booking.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        booking.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        booking.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        booking.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        booking.events?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        booking.seat_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        booking.serial_number?.toString().includes(searchTerm)
+      );
+    }
+
+    // Apply sorting
+    if (sortConfig.key && sortConfig.direction) {
+      result.sort((a, b) => {
+        let aValue: any, bValue: any;
+
+        switch (sortConfig.key) {
+          case 'serial_number':
+            aValue = a.serial_number || 0;
+            bValue = b.serial_number || 0;
+            break;
+          case 'name':
+            aValue = a.name || '';
+            bValue = b.name || '';
+            break;
+          case 'phone':
+            aValue = a.phone || '';
+            bValue = b.phone || '';
+            break;
+          case 'email':
+            aValue = a.email || '';
+            bValue = b.email || '';
+            break;
+          case 'category':
+            aValue = a.category || '';
+            bValue = b.category || '';
+            break;
+          case 'event_name':
+            aValue = a.events?.name || '';
+            bValue = b.events?.name || '';
+            break;
+          case 'seat_number':
+            aValue = a.seat_number || '';
+            bValue = b.seat_number || '';
+            break;
+          case 'ticket_status':
+            aValue = a.ticket_pdf_url ? 'Generated' : 'Not Generated';
+            bValue = b.ticket_pdf_url ? 'Generated' : 'Not Generated';
+            break;
+          case 'email_status':
+            aValue = a.ticket_sent ? 'Sent' : 'Not Sent';
+            bValue = b.ticket_sent ? 'Sent' : 'Not Sent';
+            break;
+          default:
+            return 0;
+        }
+
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
+    setFilteredBookings(result);
+    
+    // Reset to page 1 when search or sort changes
+    setCurrentPage(1);
+  }, [bookings, searchTerm, sortConfig]);
+
+  // Apply pagination
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    setPaginatedBookings(filteredBookings.slice(startIndex, endIndex));
+  }, [filteredBookings, currentPage, itemsPerPage]);
+
   // Update header checkbox state when selectedRows changes
   useEffect(() => {
-    if (headerCheckboxRef.current) {
-      const isAllSelected = selectedRows.length === bookings.length && bookings.length > 0;
-      const isSomeSelected = selectedRows.length > 0 && selectedRows.length < bookings.length;
-      
+    if (headerCheckboxRef.current && paginatedBookings.length > 0) {
+      const currentPageIds = paginatedBookings.map(b => b.ticket_id);
+      const selectedOnCurrentPage = currentPageIds.filter(id => selectedRows.includes(id));
+      const isAllSelected = selectedOnCurrentPage.length === currentPageIds.length;
+      const isSomeSelected = selectedOnCurrentPage.length > 0 && selectedOnCurrentPage.length < currentPageIds.length;
+
       headerCheckboxRef.current.checked = isAllSelected;
       headerCheckboxRef.current.indeterminate = isSomeSelected;
     }
-  }, [selectedRows, bookings]);
+  }, [selectedRows, paginatedBookings]);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -194,34 +320,29 @@ function AdminDashboard() {
           {/* Right side actions */}
           <div className="flex items-center gap-2 mt-2 sm:mt-0">
             {/* Search icon + input */}
-            <div className="flex items-center border border-[#E0AF41] rounded">
-              <span className="px-2 text-[#E0AF41]">🔍</span>
+            <div className="flex items-center border border-[#E0AF41] rounded px-3 py-1">
+              <Image
+                src="/search.svg"
+                alt="Search Icon"
+                width={16}
+                height={16}
+                className='mr-1'
+              />
               <input
                 type="text"
                 placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="bg-black text-white px-2 py-1 text-sm outline-none"
               />
             </div>
 
-            {/* Delete button - now shows selected count */}
-            {/* <button 
-              className={`px-3 py-1 border text-sm rounded transition-colors ${
-                selectedRows.length > 0 
-                  ? 'border-red-500 text-red-500 hover:bg-red-500 hover:text-white' 
-                  : 'border-[#4D4D4D] text-gray-400 cursor-not-allowed'
-              }`}
-              disabled={selectedRows.length === 0}
-            >
-              Delete {selectedRows.length > 0 && `(${selectedRows.length})`}
-            </button> */}
-
             {/* Export button */}
-            <button 
-              className={`px-3 py-1 text-sm rounded transition-colors ${
-                selectedRows.length > 0 
-                  ? 'bg-[#E0AF41] text-black hover:bg-[#c89a34] cursor-pointer' 
-                  : 'bg-gray-600 text-gray-300 cursor-not-allowed'
-              }`}
+            <button
+              className={`px-3 py-2 text-sm rounded transition-colors ${selectedRows.length > 0
+                ? 'bg-[#E0AF41] text-white hover:bg-[#c89a34] cursor-pointer'
+                : 'bg-gray-600 text-gray-300 cursor-not-allowed'
+                }`}
               onClick={exportSelectedRows}
               disabled={selectedRows.length === 0}
             >
@@ -229,6 +350,19 @@ function AdminDashboard() {
             </button>
           </div>
         </div>
+        
+        {/* Results info */}
+        <div className="flex justify-between items-center mb-2 text-sm text-gray-400">
+          <div>
+            Showing {paginatedBookings.length} of {filteredBookings.length} results
+            {searchTerm && ` for "${searchTerm}"`}
+            {selectedRows.length > 0 && ` • ${selectedRows.length} selected`}
+          </div>
+          <div>
+            Page {currentPage} of {Math.ceil(filteredBookings.length / itemsPerPage) || 1}
+          </div>
+        </div>
+
         <table className="w-full border border-[#4D4D4D] bg-white shadow-md">
           <thead className="bg-black text-sm text-white">
             <tr>
@@ -236,7 +370,7 @@ function AdminDashboard() {
                 <input
                   ref={headerCheckboxRef}
                   type="checkbox"
-                  checked={selectedRows.length === bookings.length && bookings.length > 0}
+                  checked={paginatedBookings.length > 0 && paginatedBookings.every(b => selectedRows.includes(b.ticket_id))}
                   onChange={toggleAll}
                   className="w-4 h-4 rounded cursor-pointer appearance-none border-2 border-gray-500 bg-black checked:bg-[#E0AF41] checked:border-[#E0AF41] relative"
                   style={{
@@ -245,25 +379,64 @@ function AdminDashboard() {
                     backgroundPosition: 'center',
                     backgroundRepeat: 'no-repeat'
                   }}
-                  title={
-                    selectedRows.length === 0 
-                      ? "Select all" 
-                      : selectedRows.length === bookings.length 
-                        ? "Deselect all" 
-                        : "Select all"
-                  }
+                  title="Select/deselect all on current page"
                 />
               </th>
-              <th className="px-3 py-2 border-y border-[#4D4D4D]">Serial Number</th>
-              <th className="px-3 py-2 border-y border-[#4D4D4D]">Holder Name</th>
-              <th className="px-3 py-2 border-y border-[#4D4D4D]">Phone</th>
-              <th className="px-3 py-2 border-y border-[#4D4D4D]">Email</th>
-              <th className="px-3 py-2 border-y border-[#4D4D4D]">Category</th>
-              <th className="px-3 py-2 border-y border-[#4D4D4D]">Event Name</th>
-              <th className="px-3 py-2 border-y border-[#4D4D4D]">Ticket</th>
-              <th className="px-3 py-2 border-y border-[#4D4D4D]">Seat Number</th>
+              <th 
+                className="px-3 py-2 border-y border-[#4D4D4D] cursor-pointer hover:bg-gray-800 transition-colors"
+                onClick={() => handleSort('serial_number')}
+              >
+                Serial Number {getSortIcon('serial_number')}
+              </th>
+              <th 
+                className="px-3 py-2 border-y border-[#4D4D4D] cursor-pointer hover:bg-gray-800 transition-colors"
+                onClick={() => handleSort('name')}
+              >
+                Holder Name {getSortIcon('name')}
+              </th>
+              <th 
+                className="px-3 py-2 border-y border-[#4D4D4D] cursor-pointer hover:bg-gray-800 transition-colors"
+                onClick={() => handleSort('phone')}
+              >
+                Phone {getSortIcon('phone')}
+              </th>
+              <th 
+                className="px-3 py-2 border-y border-[#4D4D4D] cursor-pointer hover:bg-gray-800 transition-colors"
+                onClick={() => handleSort('email')}
+              >
+                Email {getSortIcon('email')}
+              </th>
+              <th 
+                className="px-3 py-2 border-y border-[#4D4D4D] cursor-pointer hover:bg-gray-800 transition-colors"
+                onClick={() => handleSort('category')}
+              >
+                Category {getSortIcon('category')}
+              </th>
+              <th 
+                className="px-3 py-2 border-y border-[#4D4D4D] cursor-pointer hover:bg-gray-800 transition-colors"
+                onClick={() => handleSort('event_name')}
+              >
+                Event Name {getSortIcon('event_name')}
+              </th>
+              <th 
+                className="px-3 py-2 border-y border-[#4D4D4D] cursor-pointer hover:bg-gray-800 transition-colors"
+                onClick={() => handleSort('ticket_status')}
+              >
+                Ticket {getSortIcon('ticket_status')}
+              </th>
+              <th 
+                className="px-3 py-2 border-y border-[#4D4D4D] cursor-pointer hover:bg-gray-800 transition-colors"
+                onClick={() => handleSort('seat_number')}
+              >
+                Seat Number {getSortIcon('seat_number')}
+              </th>
               <th className="px-3 py-2 border-y border-[#4D4D4D]">Action</th>
-              <th className="px-3 py-2 border-y border-[#4D4D4D]">Send Tickets</th>
+              <th 
+                className="px-3 py-2 border-y border-[#4D4D4D] cursor-pointer hover:bg-gray-800 transition-colors"
+                onClick={() => handleSort('email_status')}
+              >
+                Send Tickets {getSortIcon('email_status')}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -271,7 +444,7 @@ function AdminDashboard() {
               let lastEmail = ''
               let isAlt = false
 
-              return bookings.map((b) => {
+              return paginatedBookings.map((b) => {
                 if (b.email !== lastEmail) {
                   isAlt = !isAlt
                   lastEmail = b.email
@@ -360,8 +533,7 @@ function AdminDashboard() {
                           </button> :
                           <button
                             className={`p-2 rounded text-white bg-gray-900 cursor-not-allowed`}
-                            onClick={() => handleSendTicket(b)}
-                            disabled={!canSendTicket}
+                            disabled={true}
                           >
                             Sent
                           </button>
@@ -373,6 +545,105 @@ function AdminDashboard() {
             })()}
           </tbody>
         </table>
+        
+        {/* Pagination Controls */}
+        {filteredBookings.length > itemsPerPage && (
+          <div className="flex justify-between items-center mt-4 px-2">
+            <div className="text-sm text-gray-400">
+              Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredBookings.length)} of {filteredBookings.length} entries
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className={`px-3 py-1 rounded text-sm ${
+                  currentPage === 1
+                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                    : 'bg-[#E0AF41] text-black hover:bg-[#c89a34] cursor-pointer'
+                }`}
+              >
+                First
+              </button>
+              
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className={`px-3 py-1 rounded text-sm ${
+                  currentPage === 1
+                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                    : 'bg-gray-700 text-white hover:bg-gray-600 cursor-pointer'
+                }`}
+              >
+                Previous
+              </button>
+              
+              {/* Page numbers */}
+              <div className="flex space-x-1">
+                {(() => {
+                  const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
+                  const pages = [];
+                  const maxVisible = 5;
+                  
+                  let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+                  let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+                  
+                  if (endPage - startPage + 1 < maxVisible) {
+                    startPage = Math.max(1, endPage - maxVisible + 1);
+                  }
+                  
+                  for (let i = startPage; i <= endPage; i++) {
+                    pages.push(
+                      <button
+                        key={i}
+                        onClick={() => setCurrentPage(i)}
+                        className={`px-3 py-1 rounded text-sm ${
+                          i === currentPage
+                            ? 'bg-[#E0AF41] text-black'
+                            : 'bg-gray-700 text-white hover:bg-gray-600'
+                        }`}
+                      >
+                        {i}
+                      </button>
+                    );
+                  }
+                  
+                  return pages;
+                })()}
+              </div>
+              
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(Math.ceil(filteredBookings.length / itemsPerPage), prev + 1))}
+                disabled={currentPage === Math.ceil(filteredBookings.length / itemsPerPage)}
+                className={`px-3 py-1 rounded text-sm ${
+                  currentPage === Math.ceil(filteredBookings.length / itemsPerPage)
+                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                    : 'bg-gray-700 text-white hover:bg-gray-600 cursor-pointer'
+                }`}
+              >
+                Next
+              </button>
+              
+              <button
+                onClick={() => setCurrentPage(Math.ceil(filteredBookings.length / itemsPerPage))}
+                disabled={currentPage === Math.ceil(filteredBookings.length / itemsPerPage)}
+                className={`px-3 py-1 rounded text-sm ${
+                  currentPage === Math.ceil(filteredBookings.length / itemsPerPage)
+                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                    : 'bg-[#E0AF41] text-black hover:bg-[#c89a34] cursor-pointer'
+                }`}
+              >
+                Last
+              </button>
+            </div>
+          </div>
+        )}
+        
+        {filteredBookings.length === 0 && searchTerm && (
+          <div className="text-center py-8 text-gray-400">
+            No results found for "{searchTerm}"
+          </div>
+        )}
       </div>
     </main>
   )
