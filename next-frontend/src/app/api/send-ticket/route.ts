@@ -1,8 +1,28 @@
 import { NextRequest } from 'next/server'
 import { Resend } from 'resend'
 import supabase from '@/lib/utils/supabaseClient'
+import { Ticket } from '@/lib/types/types'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
+
+function formatDateWithOrdinal(dateString: string) {
+  const date = new Date(dateString)
+  const day = date.getDate()
+  const month = date.toLocaleString('default', { month: 'long' })
+  const year = date.getFullYear()
+
+  const ordinalSuffix = (n: number) => {
+    if (n > 3 && n < 21) return 'th'
+    switch (n % 10) {
+      case 1: return 'st'
+      case 2: return 'nd'
+      case 3: return 'rd'
+      default: return 'th'
+    }
+  }
+
+  return `${day}${ordinalSuffix(day)} ${month} ${year}`
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,7 +36,10 @@ export async function POST(req: NextRequest) {
     // 1. Fetch ticket details with related event name
     const { data: ticket, error: ticketError } = await supabase
       .from('tickets')
-      .select('email, ticket_pdf_url, ticket_sent, events(name)')
+      .select(`
+       *,
+        events(name, date, location)
+      `)
       .eq('ticket_id', ticket_id)
       .single()
 
@@ -35,17 +58,25 @@ export async function POST(req: NextRequest) {
 
     const email = ticket.email
     const ticketUrl = ticket.ticket_pdf_url
-    const eventName = 'Raaga Experience – Live Temple Concert'
+    const eventName = ticket.events.name
+    const eventDate = ticket.events.date
+    const eventLocation = ticket.events.location
+    const eventDateFormatted = formatDateWithOrdinal(eventDate)
 
     // 2. Send email
     const sendResult = await resend.emails.send({
       from: 'Tickets <tickets@raagaexperience.com>',
       to: email,
-      subject: `🎟️ Your Ticket for ${eventName}`,
+      subject: `🎟️ Your Ticket for ${eventName} is Here!`,
       html: `
-        <p>Hi there! 👋</p>
-        <p>Thanks for booking <strong>${eventName}</strong>.</p>
-        <p>Your ticket is attached below. You can also <a href="${ticketUrl}">download it here</a>.</p>
+        <p>Hi ${email.split('@')[0]} 👋</p>
+        <p>Thank you for booking your spot at <strong>${eventName}</strong>.</p>
+        <p>We can’t wait to see you on ${eventDateFormatted} at ${eventLocation}..</p>
+        <p>Your ticket is attached below.</p>
+        <p>You can also <a href="${ticketUrl}">download it here</a>.</p>
+        <p>Tip: Save this ticket on your phone and bring a valid ID for smooth entry.</p>
+        <p>See you at the concert! 💛</p>
+        <p>Team Raaga Experience</p>
       `,
       attachments: [
         {

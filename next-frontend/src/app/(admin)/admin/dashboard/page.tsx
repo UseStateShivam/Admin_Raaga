@@ -288,7 +288,7 @@ function AdminDashboard() {
       const res = await fetch('/api/send-ticket', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticket_id: ticket.ticket_id }), // ✅ only send ID
+        body: JSON.stringify({ ticket_id: ticket.ticket_id }), 
       })
 
       const result = await res.json()
