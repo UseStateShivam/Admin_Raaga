@@ -12,6 +12,64 @@ function AdminDashboard() {
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const headerCheckboxRef = useRef<HTMLInputElement>(null);
 
+  const exportSelectedRows = () => {
+    // Get selected booking data
+    const selectedBookings = bookings.filter(booking => 
+      selectedRows.includes(booking.ticket_id)
+    );
+
+    if (selectedBookings.length === 0) {
+      alert('Please select rows to export');
+      return;
+    }
+
+    // Prepare CSV data
+    const csvHeaders = [
+      'Serial Number',
+      'Holder Name', 
+      'Phone',
+      'Email',
+      'Category',
+      'Event Name',
+      'Seat Number',
+      'Ticket Status',
+      'Ticket PDF URL',
+      'Email Status'
+    ];
+
+    const csvData = selectedBookings.map(booking => [
+      booking.serial_number || '',
+      booking.name || '',
+      booking.phone || '',
+      booking.email || '',
+      booking.category || '',
+      booking.events?.name || '',
+      booking.seat_number || 'Not Assigned',
+      booking.ticket_pdf_url ? 'Generated' : 'Not Generated',
+      booking.ticket_pdf_url || '',
+      booking.ticket_sent ? 'Sent' : 'Not Sent'
+    ]);
+
+    // Create CSV content
+    const csvContent = [
+      csvHeaders.join(','),
+      ...csvData.map(row => 
+        row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(',')
+      )
+    ].join('\n');
+
+    // Create and trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `selected_bookings_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const toggleRow = (ticketId: string) => {
     setSelectedRows(prev =>
       prev.includes(ticketId)
@@ -158,8 +216,16 @@ function AdminDashboard() {
             </button> */}
 
             {/* Export button */}
-            <button className="px-3 py-1 bg-[#E0AF41] text-black text-sm rounded hover:bg-[#c89a34]">
-              Export
+            <button 
+              className={`px-3 py-1 text-sm rounded transition-colors ${
+                selectedRows.length > 0 
+                  ? 'bg-[#E0AF41] text-black hover:bg-[#c89a34] cursor-pointer' 
+                  : 'bg-gray-600 text-gray-300 cursor-not-allowed'
+              }`}
+              onClick={exportSelectedRows}
+              disabled={selectedRows.length === 0}
+            >
+              Export {selectedRows.length > 0 && `(${selectedRows.length})`}
             </button>
           </div>
         </div>
