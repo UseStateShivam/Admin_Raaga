@@ -22,10 +22,11 @@ function AdminDashboard() {
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: null })
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(20)
+  const [isSaving, setIsSaving] = useState<Record<string, boolean>>({})
+  const [isSending, setIsSending] = useState<Record<string, boolean>>({})
   const headerCheckboxRef = useRef<HTMLInputElement>(null)
 
   const exportSelectedRows = () => {
-    // Get selected booking data from filtered results
     const selectedBookings = filteredBookings.filter(booking =>
       selectedRows.includes(booking.ticket_id)
     );
@@ -35,7 +36,6 @@ function AdminDashboard() {
       return;
     }
 
-    // Prepare CSV data
     const csvHeaders = [
       'Serial Number',
       'Holder Name',
@@ -62,7 +62,6 @@ function AdminDashboard() {
       booking.ticket_sent ? 'Sent' : 'Not Sent'
     ]);
 
-    // Create CSV content
     const csvContent = [
       csvHeaders.join(','),
       ...csvData.map(row =>
@@ -70,7 +69,6 @@ function AdminDashboard() {
       )
     ].join('\n');
 
-    // Create and trigger download
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -95,15 +93,12 @@ function AdminDashboard() {
     const allCurrentSelected = currentPageIds.every(id => selectedRows.includes(id));
     
     if (allCurrentSelected) {
-      // Deselect all on current page
       setSelectedRows(prev => prev.filter(id => !currentPageIds.includes(id)));
     } else {
-      // Select all on current page
       setSelectedRows(prev => [...new Set([...prev, ...currentPageIds])]);
     }
   };
 
-  // Sorting function
   const handleSort = (key: string) => {
     let direction: 'asc' | 'desc' = 'asc';
     
@@ -114,7 +109,6 @@ function AdminDashboard() {
     setSortConfig({ key, direction });
   };
 
-  // Get sort icon
   const getSortIcon = (columnKey: string) => {
     if (sortConfig.key !== columnKey) {
       return <FaSort className="inline ml-1 text-gray-400" />;
@@ -124,11 +118,9 @@ function AdminDashboard() {
       : <FaSortDown className="inline ml-1 text-[#E0AF41]" />;
   };
 
-  // Sort, filter and paginate data
   useEffect(() => {
     let result = [...bookings];
 
-    // Apply search filter
     if (searchTerm) {
       result = result.filter(booking =>
         booking.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -141,7 +133,6 @@ function AdminDashboard() {
       );
     }
 
-    // Apply sorting
     if (sortConfig.key && sortConfig.direction) {
       result.sort((a, b) => {
         let aValue: any, bValue: any;
@@ -198,19 +189,15 @@ function AdminDashboard() {
     }
 
     setFilteredBookings(result);
-    
-    // Reset to page 1 when search or sort changes
     setCurrentPage(1);
   }, [bookings, searchTerm, sortConfig]);
 
-  // Apply pagination
   useEffect(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     setPaginatedBookings(filteredBookings.slice(startIndex, endIndex));
   }, [filteredBookings, currentPage, itemsPerPage]);
 
-  // Update header checkbox state when selectedRows changes
   useEffect(() => {
     if (headerCheckboxRef.current && paginatedBookings.length > 0) {
       const currentPageIds = paginatedBookings.map(b => b.ticket_id);
@@ -249,6 +236,7 @@ function AdminDashboard() {
   }
 
   const handleSave = async (ticketId: string) => {
+    setIsSaving((prev) => ({ ...prev, [ticketId]: true }));
     const updatedSeat = editedSeats[ticketId]
 
     try {
@@ -280,15 +268,19 @@ function AdminDashboard() {
       })
     } catch (err) {
       console.error('Error assigning seat:', err)
+    } finally {
+      setIsSaving((prev) => ({ ...prev, [ticketId]: false }));
+      window.location.reload();
     }
   }
 
   const handleSendTicket = async (ticket: Ticket) => {
+    setIsSending((prev) => ({ ...prev, [ticket.ticket_id]: true }));
     try {
       const res = await fetch('/api/send-ticket', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticket_id: ticket.ticket_id }), 
+        body: JSON.stringify({ ticket_id: ticket.ticket_id }),
       })
 
       const result = await res.json()
@@ -301,6 +293,8 @@ function AdminDashboard() {
       )
     } catch (err) {
       console.error('Error sending ticket:', err)
+    } finally {
+      setIsSending((prev) => ({ ...prev, [ticket.ticket_id]: false }));
     }
   }
 
@@ -309,7 +303,6 @@ function AdminDashboard() {
       <main className="min-h-screen bg-black p-8 px-12 text-white mt-28">
         <h1 className="text-3xl font-bold mb-3 text-[#E0AF41]">Admin Dashboard</h1>
         <div className="overflow-x-auto">
-          {/* Top bar shimmer */}
           <div className="flex flex-wrap items-center justify-between bg-black border border-[#4D4D4D] rounded-md px-4 py-3 mb-4">
             <div className="shimmer-dark h-4 w-96 rounded"></div>
             <div className="flex items-center gap-2 mt-2 sm:mt-0">
@@ -317,16 +310,11 @@ function AdminDashboard() {
               <div className="shimmer-dark h-8 w-20 rounded"></div>
             </div>
           </div>
-          
-          {/* Results info shimmer */}
           <div className="flex justify-between items-center mb-2">
             <div className="shimmer-dark h-4 w-48 rounded"></div>
             <div className="shimmer-dark h-4 w-24 rounded"></div>
           </div>
-
-          {/* Table shimmer */}
           <div className="w-full border border-[#4D4D4D] bg-white shadow-md">
-            {/* Header shimmer */}
             <div className="bg-black px-3 py-4 border-b border-[#4D4D4D]">
               <div className="grid grid-cols-11 gap-4">
                 <div className="shimmer-dark h-4 w-4 rounded"></div>
@@ -342,8 +330,6 @@ function AdminDashboard() {
                 <div className="shimmer-dark h-4 w-20 rounded"></div>
               </div>
             </div>
-            
-            {/* Rows shimmer */}
             {Array.from({ length: 10 }).map((_, index) => (
               <div key={index} className={`px-3 py-3 border-b border-[#4D4D4D] ${index % 2 === 0 ? 'bg-black' : 'bg-[#131313]'}`}>
                 <div className="grid grid-cols-11 gap-4 items-center">
@@ -355,15 +341,13 @@ function AdminDashboard() {
                   <div className="shimmer-dark h-4 w-16 rounded"></div>
                   <div className="shimmer-dark h-4 w-28 rounded"></div>
                   <div className="shimmer-dark h-4 w-16 rounded"></div>
-                  <div className="shimmer-dark h-6 w-20 rounded"></div>
+                  <div className="shimmer-dark h-4 w-20 rounded"></div>
                   <div className="shimmer-dark h-8 w-8 rounded"></div>
                   <div className="shimmer-dark h-8 w-16 rounded"></div>
                 </div>
               </div>
             ))}
           </div>
-          
-          {/* Pagination shimmer */}
           <div className="flex justify-between items-center mt-4 px-2">
             <div className="shimmer-dark h-4 w-48 rounded"></div>
             <div className="flex items-center space-x-2">
@@ -386,15 +370,11 @@ function AdminDashboard() {
     <main className="min-h-screen bg-black p-8 px-12 text-white mt-28">
       <h1 className="text-3xl font-bold mb-3 text-[#E0AF41]">Admin Dashboard</h1>
       <div className="overflow-x-auto">
-        {/* Top bar above the table */}
         <div className="flex flex-wrap items-center justify-between bg-black border border-[#4D4D4D] rounded-md px-4 py-3 mb-4">
           <p className="text-white text-sm">
             Manage all bookings, assign seats, and control ticket PDF generation for upcoming events.
           </p>
-
-          {/* Right side actions */}
           <div className="flex items-center gap-2 mt-2 sm:mt-0">
-            {/* Search icon + input */}
             <div className="flex items-center border border-[#E0AF41] rounded px-3 py-1">
               <Image
                 src="/search.svg"
@@ -411,8 +391,6 @@ function AdminDashboard() {
                 className="bg-black text-white px-2 py-1 text-sm outline-none"
               />
             </div>
-
-            {/* Export button */}
             <button
               className={`px-3 py-2 text-sm rounded transition-colors ${selectedRows.length > 0
                 ? 'bg-[#E0AF41] text-white hover:bg-[#c89a34] cursor-pointer'
@@ -425,8 +403,6 @@ function AdminDashboard() {
             </button>
           </div>
         </div>
-        
-        {/* Results info */}
         <div className="flex justify-between items-center mb-2 text-sm text-gray-400">
           <div>
             Showing {paginatedBookings.length} of {filteredBookings.length} results
@@ -437,7 +413,6 @@ function AdminDashboard() {
             Page {currentPage} of {Math.ceil(filteredBookings.length / itemsPerPage) || 1}
           </div>
         </div>
-
         <table className="w-full border border-[#4D4D4D] bg-white shadow-md">
           <thead className="bg-black text-sm text-white">
             <tr>
@@ -579,39 +554,48 @@ function AdminDashboard() {
                     </td>
                     <td className="border-y border-[#4D4D4D] px-3 py-2 text-center">
                       <button
-                        className={`p-2 rounded text-white ${!!b.seat_number || !(editedSeats[b.ticket_id]?.trim())
-                          ? 'bg-gray-600 cursor-not-allowed'
-                          : 'bg-green-600 hover:bg-green-500 cursor-pointer'
-                          }`}
-                        onClick={async () => {
-                          await handleSave(b.ticket_id);
-                          window.location.reload();
-                        }}
-                        disabled={!!b.seat_number || !(editedSeats[b.ticket_id]?.trim())}
+                        className={`p-2 rounded text-white flex items-center justify-center min-w-[48px] ${
+                          !!b.seat_number || !(editedSeats[b.ticket_id]?.trim()) || isSaving[b.ticket_id]
+                            ? 'bg-gray-600 cursor-not-allowed'
+                            : 'bg-green-600 hover:bg-green-500 cursor-pointer'
+                        }`}
+                        onClick={() => handleSave(b.ticket_id)}
+                        disabled={!!b.seat_number || !(editedSeats[b.ticket_id]?.trim()) || isSaving[b.ticket_id]}
                       >
-                        <FaSave />
+                        {isSaving[b.ticket_id] ? (
+                          <div className="animate-spin h-5 w-5 border-2 border-t-transparent border-white rounded-full"></div>
+                        ) : (
+                          <FaSave />
+                        )}
                       </button>
                     </td>
                     <td className="border-y border-[#4D4D4D] px-3 py-2 text-center">
                       {
-                        !b.ticket_sent ?
+                        !b.ticket_sent ? (
                           <button
-                            className={`p-2 rounded text-white ${canSendTicket
-                              ? 'bg-[#E0AF41] hover:bg-[#aa852f] cursor-pointer'
-                              : 'bg-gray-600 cursor-not-allowed'
-                              }`}
+                            className={`p-2 rounded text-white flex items-center justify-center min-w-[80px] ${
+                              canSendTicket && !isSending[b.ticket_id]
+                                ? 'bg-[#E0AF41] hover:bg-[#aa852f] cursor-pointer'
+                                : 'bg-gray-600 cursor-not-allowed'
+                            }`}
                             onClick={() => handleSendTicket(b)}
-                            disabled={!canSendTicket}
+                            disabled={!canSendTicket || isSending[b.ticket_id]}
                           >
-                            <FaEnvelope className="inline-block mr-1" />
-                            Email
-                          </button> :
+                            {isSending[b.ticket_id] ? (
+                              <div className="animate-spin h-5 w-5 border-2 border-t-transparent border-white rounded-full mr-1"></div>
+                            ) : (
+                              <FaEnvelope className="inline-block mr-1" />
+                            )}
+                            {isSending[b.ticket_id] ? 'Sending...' : 'Email'}
+                          </button>
+                        ) : (
                           <button
-                            className={`p-2 rounded text-white bg-gray-900 cursor-not-allowed`}
+                            className="p-2 rounded text-white bg-gray-900 cursor-not-allowed min-w-[80px]"
                             disabled={true}
                           >
                             Sent
                           </button>
+                        )
                       }
                     </td>
                   </tr>
@@ -620,14 +604,11 @@ function AdminDashboard() {
             })()}
           </tbody>
         </table>
-        
-        {/* Pagination Controls */}
         {filteredBookings.length > itemsPerPage && (
           <div className="flex justify-between items-center mt-4 px-2">
             <div className="text-sm text-gray-400">
               Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredBookings.length)} of {filteredBookings.length} entries
             </div>
-            
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setCurrentPage(1)}
@@ -640,7 +621,6 @@ function AdminDashboard() {
               >
                 First
               </button>
-              
               <button
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
@@ -652,21 +632,16 @@ function AdminDashboard() {
               >
                 Previous
               </button>
-              
-              {/* Page numbers */}
               <div className="flex space-x-1">
                 {(() => {
                   const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
                   const pages = [];
                   const maxVisible = 5;
-                  
                   let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
                   let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-                  
                   if (endPage - startPage + 1 < maxVisible) {
                     startPage = Math.max(1, endPage - maxVisible + 1);
                   }
-                  
                   for (let i = startPage; i <= endPage; i++) {
                     pages.push(
                       <button
@@ -682,11 +657,9 @@ function AdminDashboard() {
                       </button>
                     );
                   }
-                  
                   return pages;
                 })()}
               </div>
-              
               <button
                 onClick={() => setCurrentPage(prev => Math.min(Math.ceil(filteredBookings.length / itemsPerPage), prev + 1))}
                 disabled={currentPage === Math.ceil(filteredBookings.length / itemsPerPage)}
@@ -698,7 +671,6 @@ function AdminDashboard() {
               >
                 Next
               </button>
-              
               <button
                 onClick={() => setCurrentPage(Math.ceil(filteredBookings.length / itemsPerPage))}
                 disabled={currentPage === Math.ceil(filteredBookings.length / itemsPerPage)}
@@ -713,7 +685,6 @@ function AdminDashboard() {
             </div>
           </div>
         )}
-        
         {filteredBookings.length === 0 && searchTerm && (
           <div className="text-center py-8 text-gray-400">
             No results found for "{searchTerm}"
