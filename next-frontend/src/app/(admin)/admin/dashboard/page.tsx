@@ -573,7 +573,7 @@ function AdminDashboard() {
                       {
                         !b.ticket_sent ? (
                           <button
-                            className={`p-2 rounded text-white flex items-center justify-center min-w-[80px] ${
+                            className={`p-2 rounded text-white flex items-center justify-center mx-auto min-w-[80px] ${
                               canSendTicket && !isSending[b.ticket_id]
                                 ? 'bg-[#E0AF41] hover:bg-[#aa852f] cursor-pointer'
                                 : 'bg-gray-600 cursor-not-allowed'
@@ -582,9 +582,9 @@ function AdminDashboard() {
                             disabled={!canSendTicket || isSending[b.ticket_id]}
                           >
                             {isSending[b.ticket_id] ? (
-                              <div className="animate-spin h-5 w-5 border-2 border-t-transparent border-white rounded-full mr-1"></div>
+                              <div className="animate-spin h-5 w-5 border-2 border-t-transparent border-white rounded-full"></div>
                             ) : (
-                              <FaEnvelope className="inline-block mr-1" />
+                              <FaEnvelope className="mr-1" />
                             )}
                             {isSending[b.ticket_id] ? 'Sending...' : 'Email'}
                           </button>
