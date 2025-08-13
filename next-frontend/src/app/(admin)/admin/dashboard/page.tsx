@@ -92,25 +92,26 @@ function AdminDashboard() {
   }
 
 
-  if (loading) return <p className="p-8 text-gray-700">Loading...</p>
+  if (loading) return <p className="p-8 text-[#4D4D4D]">Loading...</p>
   if (error) return <p className="p-8 text-red-600">Error: {error}</p>
 
   return (
-    <main className="min-h-screen bg-black p-8 text-white">
-      <h1 className="text-2xl font-bold mb-6 text white">🎫 Admin Dashboard</h1>
+    <main className="min-h-screen bg-black p-8 px-12 text-white mt-28">
+      <h1 className="text-2xl font-bold mb-6 text-[#E0AF41]">Admin Dashboard</h1>
       <div className="overflow-x-auto">
-        <table className="w-full border border-gray-300 bg-white shadow-md">
+        <table className="w-full border border-[#4D4D4D] bg-white shadow-md">
           <thead className="bg-black text-sm text-white">
             <tr>
-              <th className="px-3 py-2 border">Holder Name</th>
-              <th className="px-3 py-2 border">Phone</th>
-              <th className="px-3 py-2 border">Email</th>
-              <th className="px-3 py-2 border">Category</th>
-              <th className="px-3 py-2 border">Event Name</th>
-              <th className="px-3 py-2 border">Ticket</th>
-              <th className="px-3 py-2 border">Seat Number</th>
-              <th className="px-3 py-2 border">Action</th>
-              <th className="px-3 py-2 border">Send Ticket</th>
+              <th className="px-3 py-2 border-y border-[#4D4D4D]">Serial Number</th>
+              <th className="px-3 py-2 border-y border-[#4D4D4D]">Holder Name</th>
+              <th className="px-3 py-2 border-y border-[#4D4D4D]">Phone</th>
+              <th className="px-3 py-2 border-y border-[#4D4D4D]">Email</th>
+              <th className="px-3 py-2 border-y border-[#4D4D4D]">Category</th>
+              <th className="px-3 py-2 border-y border-[#4D4D4D]">Event Name</th>
+              <th className="px-3 py-2 border-y border-[#4D4D4D]">Ticket</th>
+              <th className="px-3 py-2 border-y border-[#4D4D4D]">Seat Number</th>
+              <th className="px-3 py-2 border-y border-[#4D4D4D]">Action</th>
+              <th className="px-3 py-2 border-y border-[#4D4D4D]">Send Tickets</th>
             </tr>
           </thead>
           <tbody>
@@ -124,20 +125,21 @@ function AdminDashboard() {
                   lastEmail = b.email
                 }
 
-                const rowClass = isAlt ? 'bg-black' : 'bg-gray-50'
+                const rowClass = isAlt ? 'bg-black' : 'bg-[#131313]'
                 const canSendTicket = !!b.ticket_pdf_url && !b.ticket_sent
 
                 return (
                   <tr
                     key={b.ticket_id}
-                    className={`${rowClass} text-sm text-white bg-gray-900 border-gray-700`}
+                    className={`${rowClass} text-sm text-white border-[#4D4D4D] text-center`}
                   >
-                    <td className="border border-gray-700 px-3 py-2">{b.name}</td>
-                    <td className="border border-gray-700 px-3 py-2">{b.phone}</td>
-                    <td className="border border-gray-700 px-3 py-2">{b.email}</td>
-                    <td className="border border-gray-700 px-3 py-2">{b.category}</td>
-                    <td className="border border-gray-700 px-3 py-2">{b.events.name}</td>
-                    <td className="border border-gray-700 px-3 py-2">
+                    <td className="border-y border-[#4D4D4D] px-3 py-2">{b.serial_number}</td>
+                    <td className="border-y border-[#4D4D4D] px-3 py-2">{b.name}</td>
+                    <td className="border-y border-[#4D4D4D] px-3 py-2">{b.phone}</td>
+                    <td className="border-y border-[#4D4D4D] px-3 py-2">{b.email}</td>
+                    <td className="border-y border-[#4D4D4D] px-3 py-2">{b.category}</td>
+                    <td className="border-y border-[#4D4D4D] px-3 py-2">{b.events.name}</td>
+                    <td className="border-y border-[#4D4D4D] px-3 py-2">
                       {b.ticket_pdf_url ? (
                         <a
                           href={b.ticket_pdf_url}
@@ -148,46 +150,56 @@ function AdminDashboard() {
                           View PDF
                         </a>
                       ) : (
-                        <span className="text-gray-500">No PDF</span>
+                        <span className="text-gray-500 cursor-not-allowed">No PDF</span>
                       )}
                     </td>
-                    <td className="border border-gray-700 px-3 py-2">
+                    <td className="border-y border-[#4D4D4D] px-3 py-2">
                       <input
                         type="text"
-                        className="border border-gray-600 bg-gray-800 text-white rounded px-2 py-1 text-sm w-full disabled:bg-gray-700"
+                        className="border-y border-gray-600 bg-gray-800 text-white rounded px-2 py-1 text-sm w-full disabled:bg-[#4D4D4D] disabled:cursor-not-allowed"
                         value={editedSeats[b.ticket_id] ?? b.seat_number}
                         onChange={(e) => handleSeatChange(b.ticket_id, e.target.value)}
                         disabled={!!b.seat_number}
                         placeholder="Assign seat"
                       />
                     </td>
-                    <td className="border border-gray-700 px-3 py-2 text-center">
+                    <td className="border-y border-[#4D4D4D] px-3 py-2 text-center">
                       <button
-                        className={`p-2 rounded text-white ${b.seat_number
+                        className={`p-2 rounded text-white ${!!b.seat_number || !(editedSeats[b.ticket_id]?.trim())
                           ? 'bg-gray-600 cursor-not-allowed'
-                          : 'bg-green-600 hover:bg-green-500'
+                          : 'bg-green-600 hover:bg-green-500 cursor-pointer'
                           }`}
                         onClick={async () => {
                           await handleSave(b.ticket_id);
                           window.location.reload();
                         }}
-                        disabled={!!b.seat_number}
+                        disabled={!!b.seat_number || !(editedSeats[b.ticket_id]?.trim())}
                       >
                         <FaSave />
                       </button>
                     </td>
-                    <td className="border border-gray-700 px-3 py-2 text-center">
-                      <button
-                        className={`p-2 rounded text-white ${canSendTicket
-                          ? 'bg-blue-600 hover:bg-blue-500'
-                          : 'bg-gray-600 cursor-not-allowed'
-                          }`}
-                        onClick={() => handleSendTicket(b)}
-                        disabled={!canSendTicket}
-                      >
-                        <FaEnvelope className="inline-block mr-1" />
-                        E-Mail
-                      </button>
+                    <td className="border-y border-[#4D4D4D] px-3 py-2 text-center">
+                      {
+                        !b.ticket_sent ?
+                          <button
+                            className={`p-2 rounded text-white ${canSendTicket
+                              ? 'bg-[#E0AF41] hover:bg-[#aa852f] cursor-pointer'
+                              : 'bg-gray-600 cursor-not-allowed'
+                              }`}
+                            onClick={() => handleSendTicket(b)}
+                            disabled={!canSendTicket}
+                          >
+                            <FaEnvelope className="inline-block mr-1" />
+                            Email
+                          </button> :
+                          <button
+                            className={`p-2 rounded text-white bg-gray-900 cursor-not-allowed`}
+                            onClick={() => handleSendTicket(b)}
+                            disabled={!canSendTicket}
+                          >
+                            Sent
+                          </button>
+                      }
                     </td>
                   </tr>
                 );

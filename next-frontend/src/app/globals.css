@@ -1,1 +1,49 @@
 @import "tailwindcss";
+
+body {
+  @apply bg-black text-gray-100;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+/* Dark shimmer (video) - high contrast */
+.shimmer-dark {
+  background: linear-gradient(
+    90deg,
+    #1a1a1a 0%,   /* deep shadow */
+    #3a3a3a 50%,  /* mid-tone highlight */
+    #1a1a1a 100%  /* deep shadow */
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite linear;
+}
+
+/* Light shimmer (images) */
+.shimmer-light {
+  background: linear-gradient(
+    90deg,
+    #e0e0e0 0%,   /* darker light gray */
+    #ffffff 50%,  /* pure white for strong highlight */
+    #e0e0e0 100%  /* darker light gray */
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 1.6s infinite linear;
+}
+
+/* NProgress bar */
+#nprogress .bar {
+  background: #E0AF41;
+  height: 3px;
+}
+
+/* Optional: Remove spinner entirely */
+#nprogress .spinner {
+  display: none;
+}

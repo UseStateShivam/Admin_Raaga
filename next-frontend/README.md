@@ -1,4 +1,4 @@
-ticket id col in admin dashboard
+<!-- ticket id col in admin dashboard -->
 email content update
 ticket ui
 seat number update
