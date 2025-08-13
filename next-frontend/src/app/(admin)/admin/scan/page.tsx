@@ -63,31 +63,31 @@ export default function ScanPage() {
   }
 
   const getThemeColor = () => {
-    if (ticket?.status === 'CONFIRMED') return 'bg-green-100 text-green-800'
-    if (ticket?.status === 'USED') return 'bg-red-100 text-red-800'
-    return 'bg-gray-100'
+    if (ticket?.status === 'CONFIRMED') return 'bg-green-900 text-green-300'
+    if (ticket?.status === 'USED') return 'bg-red-900 text-red-300'
+    return 'bg-gray-800 text-gray-300'
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-xl mx-auto bg-white shadow-md rounded-lg p-6 space-y-4">
-        <h1 className="text-xl font-bold">Scan Ticket QR</h1>
-        <div id="reader" className="w-full" />
+    <div className="min-h-screen bg-black p-6 text-white mt-40">
+      <div className="max-w-xl mx-auto bg-[#1a1a1a] shadow-md rounded-lg p-6 space-y-4 border border-[#E0AF41]">
+        <h1 className="text-xl font-bold text-[#E0AF41]">Scan Ticket QR</h1>
+        <div id="reader" className="w-full border border-[#E0AF41] rounded-lg" />
 
-        {error && <p className="text-red-500">{error}</p>}
+        {error && <p className="text-red-400">{error}</p>}
 
         {ticket && (
-          <div className={`p-4 mt-4 rounded ${getThemeColor()}`}>
-            <p><strong>Name:</strong> {ticket.name}</p>
-            <p><strong>Email:</strong> {ticket.email}</p>
-            <p><strong>Phone:</strong> {ticket.phone}</p>
-            <p><strong>Seat Number:</strong> {ticket.seat_number}</p>
-            <p><strong>Status:</strong> {ticket.status}</p>
+          <div className={`p-4 mt-4 rounded ${getThemeColor()} border border-[#E0AF41]`}>
+            <p><strong className="text-[#E0AF41]">Name:</strong> {ticket.name}</p>
+            <p><strong className="text-[#E0AF41]">Email:</strong> {ticket.email}</p>
+            <p><strong className="text-[#E0AF41]">Phone:</strong> {ticket.phone}</p>
+            <p><strong className="text-[#E0AF41]">Seat Number:</strong> {ticket.seat_number}</p>
+            <p><strong className="text-[#E0AF41]">Status:</strong> {ticket.status}</p>
 
             {ticket.status === 'CONFIRMED' && (
               <button
                 onClick={handleMarkUsed}
-                className="mt-4 bg-red-600 text-white px-4 py-2 rounded"
+                className="mt-4 bg-[#E0AF41] text-black font-semibold px-4 py-2 rounded hover:bg-yellow-500 transition"
               >
                 Mark as Used
               </button>
