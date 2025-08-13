@@ -135,7 +135,7 @@ function AdminDashboard() {
 
     if (sortConfig.key && sortConfig.direction) {
       result.sort((a, b) => {
-        let aValue: any, bValue: any;
+        let aValue: string | number | null, bValue: string | number | null;
 
         switch (sortConfig.key) {
           case 'serial_number':
@@ -638,7 +638,7 @@ function AdminDashboard() {
                   const pages = [];
                   const maxVisible = 5;
                   let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-                  let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+                  const endPage = Math.min(totalPages, startPage + maxVisible - 1);
                   if (endPage - startPage + 1 < maxVisible) {
                     startPage = Math.max(1, endPage - maxVisible + 1);
                   }
@@ -687,7 +687,7 @@ function AdminDashboard() {
         )}
         {filteredBookings.length === 0 && searchTerm && (
           <div className="text-center py-8 text-gray-400">
-            No results found for "{searchTerm}"
+            No results found {searchTerm && ` for &quot;${searchTerm}&quot;`}"
           </div>
         )}
       </div>
