@@ -1,7 +1,6 @@
+import supabase from '@/lib/utils/supabaseClient'
 import { NextRequest } from 'next/server'
 import { Resend } from 'resend'
-import supabase from '@/lib/utils/supabaseClient'
-import { Ticket } from '@/lib/types/types'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 

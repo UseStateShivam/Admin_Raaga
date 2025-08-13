@@ -31,14 +31,14 @@ export async function GET() {
       const { event_id, category } = ticket
 
       // 3a: Fetch event name
-      const { data: event, error: eventError } = await supabase
+      const { data: event } = await supabase
         .from('events')
         .select('name')
         .eq('event_id', event_id)
         .single()
 
       // 3b: Fetch ticket price from event_ticket_types
-      const { data: ticketType, error: priceError } = await supabase
+      const { data: ticketType } = await supabase
         .from('event_ticket_types')
         .select('price')
         .eq('event_id', event_id)
