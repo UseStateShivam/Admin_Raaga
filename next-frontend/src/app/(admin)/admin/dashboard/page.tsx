@@ -91,7 +91,7 @@ function AdminDashboard() {
   const toggleAll = () => {
     const currentPageIds = paginatedBookings.map(b => b.ticket_id);
     const allCurrentSelected = currentPageIds.every(id => selectedRows.includes(id));
-    
+
     if (allCurrentSelected) {
       setSelectedRows(prev => prev.filter(id => !currentPageIds.includes(id)));
     } else {
@@ -101,11 +101,11 @@ function AdminDashboard() {
 
   const handleSort = (key: string) => {
     let direction: 'asc' | 'desc' = 'asc';
-    
+
     if (sortConfig.key === key && sortConfig.direction === 'asc') {
       direction = 'desc';
     }
-    
+
     setSortConfig({ key, direction });
   };
 
@@ -113,7 +113,7 @@ function AdminDashboard() {
     if (sortConfig.key !== columnKey) {
       return <FaSort className="inline ml-1 text-gray-400" />;
     }
-    return sortConfig.direction === 'asc' 
+    return sortConfig.direction === 'asc'
       ? <FaSortUp className="inline ml-1 text-[#E0AF41]" />
       : <FaSortDown className="inline ml-1 text-[#E0AF41]" />;
   };
@@ -217,9 +217,14 @@ function AdminDashboard() {
         if (!res.ok) throw new Error('Failed to fetch bookings')
         const data = await res.json()
         setBookings(data)
-      } catch (err: any) {
-        setError(err.message)
-        console.error('Error fetching bookings:', err)
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message)
+          console.error('Error fetching bookings:', err)
+        } else {
+          setError('An unknown error occurred')
+          console.error('Error fetching bookings:', err)
+        }
       } finally {
         setLoading(false)
       }
@@ -432,56 +437,56 @@ function AdminDashboard() {
                   title="Select/deselect all on current page"
                 />
               </th>
-              <th 
+              <th
                 className="px-3 py-2 border-y border-[#4D4D4D] cursor-pointer hover:bg-gray-800 transition-colors"
                 onClick={() => handleSort('serial_number')}
               >
                 Serial Number {getSortIcon('serial_number')}
               </th>
-              <th 
+              <th
                 className="px-3 py-2 border-y border-[#4D4D4D] cursor-pointer hover:bg-gray-800 transition-colors"
                 onClick={() => handleSort('name')}
               >
                 Holder Name {getSortIcon('name')}
               </th>
-              <th 
+              <th
                 className="px-3 py-2 border-y border-[#4D4D4D] cursor-pointer hover:bg-gray-800 transition-colors"
                 onClick={() => handleSort('phone')}
               >
                 Phone {getSortIcon('phone')}
               </th>
-              <th 
+              <th
                 className="px-3 py-2 border-y border-[#4D4D4D] cursor-pointer hover:bg-gray-800 transition-colors"
                 onClick={() => handleSort('email')}
               >
                 Email {getSortIcon('email')}
               </th>
-              <th 
+              <th
                 className="px-3 py-2 border-y border-[#4D4D4D] cursor-pointer hover:bg-gray-800 transition-colors"
                 onClick={() => handleSort('category')}
               >
                 Category {getSortIcon('category')}
               </th>
-              <th 
+              <th
                 className="px-3 py-2 border-y border-[#4D4D4D] cursor-pointer hover:bg-gray-800 transition-colors"
                 onClick={() => handleSort('event_name')}
               >
                 Event Name {getSortIcon('event_name')}
               </th>
-              <th 
+              <th
                 className="px-3 py-2 border-y border-[#4D4D4D] cursor-pointer hover:bg-gray-800 transition-colors"
                 onClick={() => handleSort('ticket_status')}
               >
                 Ticket {getSortIcon('ticket_status')}
               </th>
-              <th 
+              <th
                 className="px-3 py-2 border-y border-[#4D4D4D] cursor-pointer hover:bg-gray-800 transition-colors"
                 onClick={() => handleSort('seat_number')}
               >
                 Seat Number {getSortIcon('seat_number')}
               </th>
               <th className="px-3 py-2 border-y border-[#4D4D4D]">Action</th>
-              <th 
+              <th
                 className="px-3 py-2 border-y border-[#4D4D4D] cursor-pointer hover:bg-gray-800 transition-colors"
                 onClick={() => handleSort('email_status')}
               >
@@ -554,11 +559,10 @@ function AdminDashboard() {
                     </td>
                     <td className="border-y border-[#4D4D4D] px-3 py-2 text-center">
                       <button
-                        className={`p-2 rounded text-white flex items-center justify-center min-w-[48px] ${
-                          !!b.seat_number || !(editedSeats[b.ticket_id]?.trim()) || isSaving[b.ticket_id]
-                            ? 'bg-gray-600 cursor-not-allowed'
-                            : 'bg-green-600 hover:bg-green-500 cursor-pointer'
-                        }`}
+                        className={`p-2 rounded text-white flex items-center justify-center min-w-[48px] ${!!b.seat_number || !(editedSeats[b.ticket_id]?.trim()) || isSaving[b.ticket_id]
+                          ? 'bg-gray-600 cursor-not-allowed'
+                          : 'bg-green-600 hover:bg-green-500 cursor-pointer'
+                          }`}
                         onClick={() => handleSave(b.ticket_id)}
                         disabled={!!b.seat_number || !(editedSeats[b.ticket_id]?.trim()) || isSaving[b.ticket_id]}
                       >
@@ -573,11 +577,10 @@ function AdminDashboard() {
                       {
                         !b.ticket_sent ? (
                           <button
-                            className={`p-2 rounded text-white flex items-center justify-center mx-auto min-w-[80px] ${
-                              canSendTicket && !isSending[b.ticket_id]
-                                ? 'bg-[#E0AF41] hover:bg-[#aa852f] cursor-pointer'
-                                : 'bg-gray-600 cursor-not-allowed'
-                            }`}
+                            className={`p-2 rounded text-white flex items-center justify-center mx-auto min-w-[80px] ${canSendTicket && !isSending[b.ticket_id]
+                              ? 'bg-[#E0AF41] hover:bg-[#aa852f] cursor-pointer'
+                              : 'bg-gray-600 cursor-not-allowed'
+                              }`}
                             onClick={() => handleSendTicket(b)}
                             disabled={!canSendTicket || isSending[b.ticket_id]}
                           >
@@ -613,22 +616,20 @@ function AdminDashboard() {
               <button
                 onClick={() => setCurrentPage(1)}
                 disabled={currentPage === 1}
-                className={`px-3 py-1 rounded text-sm ${
-                  currentPage === 1
-                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                    : 'bg-[#E0AF41] text-black hover:bg-[#c89a34] cursor-pointer'
-                }`}
+                className={`px-3 py-1 rounded text-sm ${currentPage === 1
+                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                  : 'bg-[#E0AF41] text-black hover:bg-[#c89a34] cursor-pointer'
+                  }`}
               >
                 First
               </button>
               <button
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className={`px-3 py-1 rounded text-sm ${
-                  currentPage === 1
-                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                    : 'bg-gray-700 text-white hover:bg-gray-600 cursor-pointer'
-                }`}
+                className={`px-3 py-1 rounded text-sm ${currentPage === 1
+                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                  : 'bg-gray-700 text-white hover:bg-gray-600 cursor-pointer'
+                  }`}
               >
                 Previous
               </button>
@@ -647,11 +648,10 @@ function AdminDashboard() {
                       <button
                         key={i}
                         onClick={() => setCurrentPage(i)}
-                        className={`px-3 py-1 rounded text-sm ${
-                          i === currentPage
-                            ? 'bg-[#E0AF41] text-black'
-                            : 'bg-gray-700 text-white hover:bg-gray-600'
-                        }`}
+                        className={`px-3 py-1 rounded text-sm ${i === currentPage
+                          ? 'bg-[#E0AF41] text-black'
+                          : 'bg-gray-700 text-white hover:bg-gray-600'
+                          }`}
                       >
                         {i}
                       </button>
@@ -663,22 +663,20 @@ function AdminDashboard() {
               <button
                 onClick={() => setCurrentPage(prev => Math.min(Math.ceil(filteredBookings.length / itemsPerPage), prev + 1))}
                 disabled={currentPage === Math.ceil(filteredBookings.length / itemsPerPage)}
-                className={`px-3 py-1 rounded text-sm ${
-                  currentPage === Math.ceil(filteredBookings.length / itemsPerPage)
-                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                    : 'bg-gray-700 text-white hover:bg-gray-600 cursor-pointer'
-                }`}
+                className={`px-3 py-1 rounded text-sm ${currentPage === Math.ceil(filteredBookings.length / itemsPerPage)
+                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                  : 'bg-gray-700 text-white hover:bg-gray-600 cursor-pointer'
+                  }`}
               >
                 Next
               </button>
               <button
                 onClick={() => setCurrentPage(Math.ceil(filteredBookings.length / itemsPerPage))}
                 disabled={currentPage === Math.ceil(filteredBookings.length / itemsPerPage)}
-                className={`px-3 py-1 rounded text-sm ${
-                  currentPage === Math.ceil(filteredBookings.length / itemsPerPage)
-                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                    : 'bg-[#E0AF41] text-black hover:bg-[#c89a34] cursor-pointer'
-                }`}
+                className={`px-3 py-1 rounded text-sm ${currentPage === Math.ceil(filteredBookings.length / itemsPerPage)
+                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                  : 'bg-[#E0AF41] text-black hover:bg-[#c89a34] cursor-pointer'
+                  }`}
               >
                 Last
               </button>
@@ -687,7 +685,7 @@ function AdminDashboard() {
         )}
         {filteredBookings.length === 0 && searchTerm && (
           <div className="text-center py-8 text-gray-400">
-            No results found {searchTerm && ` for &quot;${searchTerm}&quot;`}"
+            No results found {searchTerm && ` for “${searchTerm}”`}
           </div>
         )}
       </div>
