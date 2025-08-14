@@ -16,7 +16,8 @@ export async function GET() {
             seat_number,
             event_id,
             ticket_sent,
-            events(name)
+            events(name),
+            created_at
         `)
         .order('email', { ascending: true })
         

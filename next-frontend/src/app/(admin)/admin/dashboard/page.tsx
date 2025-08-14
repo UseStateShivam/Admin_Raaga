@@ -43,6 +43,7 @@ function AdminDashboard() {
       'Email',
       'Category',
       'Event Name',
+      'Date of Booking',
       'Seat Number',
       'Ticket Status',
       'Ticket PDF URL',
@@ -56,6 +57,7 @@ function AdminDashboard() {
       booking.email || '',
       booking.category || '',
       booking.events?.name || '',
+      booking.created_at || '',
       booking.seat_number || 'Not Assigned',
       booking.ticket_pdf_url ? 'Generated' : 'Not Generated',
       booking.ticket_pdf_url || '',
@@ -88,6 +90,7 @@ function AdminDashboard() {
       'Email',
       'Category',
       'Event Name',
+      'Date of Booking',
       'Seat Number',
       'Ticket Status',
       'Ticket PDF URL',
@@ -101,6 +104,7 @@ function AdminDashboard() {
       booking.email || '',
       booking.category || '',
       booking.events?.name || '',
+      booking.created_at || '',
       booking.seat_number || 'Not Assigned',
       booking.ticket_pdf_url ? 'Generated' : 'Not Generated',
       booking.ticket_pdf_url || '',
@@ -173,6 +177,7 @@ function AdminDashboard() {
         booking.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         booking.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         booking.events?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        booking.created_at?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         booking.seat_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         booking.serial_number?.toString().includes(searchTerm)
       );
@@ -206,6 +211,10 @@ function AdminDashboard() {
           case 'event_name':
             aValue = a.events?.name || '';
             bValue = b.events?.name || '';
+            break;
+          case 'date_of_booking':
+            aValue = a.created_at || '';
+            bValue = b.created_at || '';
             break;
           case 'seat_number':
             aValue = a.seat_number || '';
@@ -474,7 +483,7 @@ function AdminDashboard() {
           </div>
         </div>
         <table className="w-full border border-[#4D4D4D] bg-white shadow-md">
-          <thead className="bg-black text-sm text-white">
+          <thead className="bg-black text-[12px] text-[#e3e3e3]">
             <tr>
               <th className="px-3 py-2 border-y border-[#4D4D4D]">
                 <input
@@ -530,6 +539,12 @@ function AdminDashboard() {
               </th>
               <th
                 className="px-3 py-2 border-y border-[#4D4D4D] cursor-pointer hover:bg-gray-800 transition-colors"
+                onClick={() => handleSort('date_of_booking')}
+              >
+                Date of Booking {getSortIcon('date_of_booking')}
+              </th>
+              <th
+                className="px-3 py-2 border-y border-[#4D4D4D] cursor-pointer hover:bg-gray-800 transition-colors"
                 onClick={() => handleSort('ticket_status')}
               >
                 Ticket {getSortIcon('ticket_status')}
@@ -566,7 +581,7 @@ function AdminDashboard() {
                 return (
                   <tr
                     key={b.ticket_id}
-                    className={`${rowClass} text-sm text-white border-[#4D4D4D] text-center`}
+                    className={`${rowClass} text-[12px] text-[#e3e3e3] border-[#4D4D4D] text-center`}
                   >
                     <td className="border-y border-[#4D4D4D] px-3 py-2 text-center">
                       <input
@@ -588,6 +603,16 @@ function AdminDashboard() {
                     <td className="border-y border-[#4D4D4D] px-3 py-2">{b.email}</td>
                     <td className="border-y border-[#4D4D4D] px-3 py-2">{b.category}</td>
                     <td className="border-y border-[#4D4D4D] px-3 py-2">{b.events.name}</td>
+                    <td className="border-y border-[#4D4D4D] px-3 py-2">
+                      {new Date(b.created_at).toLocaleString('en-IN', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                      })}
+                    </td>
                     <td className="border-y border-[#4D4D4D] px-3 py-2">
                       {b.ticket_pdf_url ? (
                         <a

@@ -39,5 +39,6 @@ export type Ticket = {
   status: string
   ticket_sent: boolean
   ticket_pdf_url: string
+  created_at: string
   seat_number: string
 }
