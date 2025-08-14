@@ -94,6 +94,9 @@ export default function ScanPage() {
       aspectRatio: 1.0,
       disableFlip: false,
       supportedScanTypes: [],
+      videoConstraints: {
+        facingMode: { exact: "environment" }
+      },
     }
 
     try {
@@ -125,11 +128,17 @@ export default function ScanPage() {
         return
       }
 
-      // Prefer back camera for mobile, any camera for desktop
+      // Always prefer back camera - find by label patterns
       const backCamera = devices.find((device) =>
         /back|rear|environment|camera2|0/gi.test(device.label)
       )
-      const selectedCameraId = backCamera ? backCamera.id : devices[0].id
+      
+      // If no back camera found by label, try to find by id (usually camera 0 is back on mobile)
+      const fallbackBackCamera = devices.find((device) => 
+        device.id === "0" || device.id.includes("back") || device.id.includes("environment")
+      )
+      
+      const selectedCameraId = backCamera ? backCamera.id : (fallbackBackCamera ? fallbackBackCamera.id : devices[0].id)
 
       html5QrCodeRef.current = new Html5Qrcode("reader")
 
@@ -139,7 +148,7 @@ export default function ScanPage() {
         aspectRatio: 1.0,
         disableFlip: false,
         videoConstraints: {
-          facingMode: isMobile ? { ideal: "environment" } : "user"
+          facingMode: { exact: "environment" }
         }
       }
 
