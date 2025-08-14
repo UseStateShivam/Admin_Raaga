@@ -1,6 +1,6 @@
 'use client'
 
-import { Html5Qrcode } from 'html5-qrcode'
+import { Html5Qrcode, Html5QrcodeCameraScanConfig } from 'html5-qrcode'
 import { useEffect, useState } from 'react'
 
 type Ticket = {
@@ -18,14 +18,33 @@ export default function ScanPage() {
   const [ticket, setTicket] = useState<Ticket | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [scannerStarted, setScannerStarted] = useState(false)
+  const [cameraId, setCameraId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!scannerStarted) return
 
+    Html5Qrcode.getCameras()
+      .then((devices) => {
+        if (devices && devices.length) {
+          // pick the back camera
+          const backCamera = devices.find((device) =>
+            /back|rear|environment/gi.test(device.label)
+          )
+          setCameraId(backCamera ? backCamera.id : devices[0].id)
+        } else {
+          setError('No cameras found on this device.')
+        }
+      })
+      .catch((err) => setError('Error detecting cameras: ' + err))
+  }, [scannerStarted])
+
+  useEffect(() => {
+    if (!scannerStarted || !cameraId) return
+
     const html5Qrcode = new Html5Qrcode('reader')
 
     const qrCodeSuccessCallback = async (decodedText: string) => {
-      html5Qrcode.stop().catch(() => { })
+      html5Qrcode.stop().catch(() => {})
       const res = await fetch('/api/scan-ticket', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -41,25 +60,18 @@ export default function ScanPage() {
       }
     }
 
+    const config: Html5QrcodeCameraScanConfig = { fps: 10, qrbox: 300 }
+
     html5Qrcode
-      .start(
-        { facingMode: 'environment' }, // back camera
-        { fps: 10, qrbox: 300 },
-        qrCodeSuccessCallback,
-        (errorMessage) => {
-          // Called for each scan failure (optional)
-          console.warn('QR scan error:', errorMessage)
-        }
-      )
-      .catch((err) => {
-        console.warn('Camera start failed:', err)
-        setError('Camera access failed. Please upload an image with QR code.')
+      .start(cameraId, config, qrCodeSuccessCallback, (err) => {
+        console.warn('Scan error:', err)
       })
+      .catch((err) => setError('Camera start failed: ' + err))
 
     return () => {
-      html5Qrcode.stop().catch(() => { })
+      html5Qrcode.stop().catch(() => {})
     }
-  }, [scannerStarted])
+  }, [cameraId, scannerStarted])
 
   const handleMarkUsed = async () => {
     if (!ticket) return
@@ -69,9 +81,7 @@ export default function ScanPage() {
       body: JSON.stringify({ ticket_id: ticket.ticket_id }),
     })
 
-    if (res.ok) {
-      setTicket({ ...ticket, status: 'USED' })
-    }
+    if (res.ok) setTicket({ ...ticket, status: 'USED' })
   }
 
   const handleFileScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -110,7 +120,6 @@ export default function ScanPage() {
       <div className="max-w-md w-full bg-[#1a1a1a] shadow-xl rounded-2xl p-6 space-y-6 border border-[#E0AF41]">
         <h1 className="text-2xl font-bold text-center text-[#E0AF41]">Scan Ticket QR</h1>
 
-        {/* Start Scanner Button */}
         {!scannerStarted && (
           <button
             onClick={() => setScannerStarted(true)}
@@ -120,13 +129,11 @@ export default function ScanPage() {
           </button>
         )}
 
-        {/* File Upload Fallback */}
         <label className="w-full mt-2 block bg-[#E0AF41] hover:bg-yellow-500 text-black font-semibold py-2 text-center rounded-xl cursor-pointer">
           Upload QR Image
           <input type="file" accept="image/*" className="hidden" onChange={handleFileScan} />
         </label>
 
-        {/* Scanner Box */}
         {scannerStarted && (
           <div className="relative w-full h-[386px] border-4 border-dashed border-[#E0AF41] rounded-xl overflow-hidden flex items-center justify-center bg-gray-900">
             <div id="reader" className="absolute w-full h-full" />
@@ -134,10 +141,8 @@ export default function ScanPage() {
           </div>
         )}
 
-        {/* Error */}
         {error && <p className="text-red-400 text-center font-medium">{error}</p>}
 
-        {/* Ticket Info */}
         {ticket && (
           <div className={`p-5 rounded-xl ${getThemeColor()} border border-[#E0AF41] shadow-md`}>
             <p className="mb-1"><strong className="text-[#E0AF41]">Name:</strong> {ticket.name}</p>
