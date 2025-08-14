@@ -22,7 +22,7 @@ export default function ScanPage() {
     let scanner: Html5QrcodeScanner
 
     Html5Qrcode.getCameras()
-      .then((devices: any[]) => {
+      .then((devices) => {
         if (devices && devices.length) {
           // Try to select the back camera (environment)
           const backCamera = devices.find((d) =>
