@@ -134,6 +134,7 @@ function Nav() {
         <div className="sm:hidden flex flex-col bg-black bg-opacity-90 p-4 gap-4 border-t border-[#E0AF41] animate-fadeIn">
           {[
             { label: 'Scan', href: '/admin/scan' },
+            { label: 'Dashboard', href: '/admin/dashboard' },
           ].map((item) => (
             <button
               key={item.label}
@@ -147,13 +148,6 @@ function Nav() {
 
           {user ? (
             <>
-              <button
-                onClick={() => handleNavClick(`/my-tickets/${user.id}`)}
-                className={`text-left ${pathname.startsWith('/my-tickets') ? 'text-[#E0AF41] underline underline-offset-4' : 'hover:text-[#E0AF41]'
-                  }`}
-              >
-                My Tickets
-              </button>
               <strong className="text-[#E0AF41]">{user.email?.split('@')[0]}</strong>
               <button
                 onClick={() => {
