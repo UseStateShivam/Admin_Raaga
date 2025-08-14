@@ -2,7 +2,6 @@
 
 import { Html5Qrcode, Html5QrcodeScanner } from 'html5-qrcode'
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 
 type Ticket = {
   name: string
@@ -16,7 +15,6 @@ type Ticket = {
 }
 
 export default function ScanPage() {
-  const router = useRouter()
   const [ticket, setTicket] = useState<Ticket | null>(null)
   const [error, setError] = useState<string | null>(null)
 
