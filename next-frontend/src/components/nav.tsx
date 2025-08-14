@@ -133,9 +133,7 @@ function Nav() {
       {menuOpen && (
         <div className="sm:hidden flex flex-col bg-black bg-opacity-90 p-4 gap-4 border-t border-[#E0AF41] animate-fadeIn">
           {[
-            { label: 'Home', href: 'https://raagaexperience.com/' },
-            { label: 'Events', href: '/event' },
-            // { label: 'Buy Tickets', href: '/event' },
+            { label: 'Scan', href: '/admin/scan' },
           ].map((item) => (
             <button
               key={item.label}
