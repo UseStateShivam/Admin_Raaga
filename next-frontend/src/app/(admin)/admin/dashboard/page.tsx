@@ -80,6 +80,51 @@ function AdminDashboard() {
     document.body.removeChild(link);
   };
 
+  const exportAllRows = () => {
+    const csvHeaders = [
+      'Serial Number',
+      'Holder Name',
+      'Phone',
+      'Email',
+      'Category',
+      'Event Name',
+      'Seat Number',
+      'Ticket Status',
+      'Ticket PDF URL',
+      'Email Status'
+    ];
+
+    const csvData = bookings.map(booking => [
+      booking.serial_number || '',
+      booking.name || '',
+      booking.phone || '',
+      booking.email || '',
+      booking.category || '',
+      booking.events?.name || '',
+      booking.seat_number || 'Not Assigned',
+      booking.ticket_pdf_url ? 'Generated' : 'Not Generated',
+      booking.ticket_pdf_url || '',
+      booking.ticket_sent ? 'Sent' : 'Not Sent'
+    ]);
+
+    const csvContent = [
+      csvHeaders.join(','),
+      ...csvData.map(row =>
+        row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(',')
+      )
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `selected_bookings_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const toggleRow = (ticketId: string) => {
     setSelectedRows(prev =>
       prev.includes(ticketId)
@@ -405,6 +450,16 @@ function AdminDashboard() {
               disabled={selectedRows.length === 0}
             >
               Export {selectedRows.length > 0 && `(${selectedRows.length})`}
+            </button>
+            <button
+              className={`px-3 py-2 text-sm rounded transition-colors ${selectedRows.length <= 0
+                ? 'bg-[#E0AF41] text-white hover:bg-[#c89a34] cursor-pointer'
+                : 'bg-gray-600 text-gray-300 cursor-not-allowed'
+                }`}
+              onClick={exportAllRows}
+              disabled={selectedRows.length !== 0}
+            >
+              Export All
             </button>
           </div>
         </div>
