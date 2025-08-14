@@ -1,6 +1,6 @@
 'use client'
 
-import { Html5QrcodeScanner } from 'html5-qrcode'
+import { Html5Qrcode } from 'html5-qrcode'
 import { useEffect, useState } from 'react'
 
 type Ticket = {
@@ -17,37 +17,49 @@ type Ticket = {
 export default function ScanPage() {
   const [ticket, setTicket] = useState<Ticket | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [scannerStarted, setScannerStarted] = useState(false)
 
   useEffect(() => {
-    const scanner = new Html5QrcodeScanner('reader', { fps: 10, qrbox: 300, aspectRatio: 1.0 }, false)
+    if (!scannerStarted) return
 
-    scanner.render(
-      async (decodedText) => {
-        scanner.clear()
-        const res = await fetch('/api/scan-ticket', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ticket_id: decodedText }),
-        })
+    const html5Qrcode = new Html5Qrcode('reader')
 
-        const data = await res.json()
-        if (!res.ok) {
-          setError(data.error || 'Something went wrong')
-          setTicket(null)
-        } else {
-          setTicket(data.ticket)
-          setError(null)
-        }
-      },
-      (err) => {
-        console.warn('QR scan error:', err)
+    const qrCodeSuccessCallback = async (decodedText: string) => {
+      html5Qrcode.stop().catch(() => { })
+      const res = await fetch('/api/scan-ticket', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticket_id: decodedText }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'Something went wrong')
+        setTicket(null)
+      } else {
+        setTicket(data.ticket)
+        setError(null)
       }
-    )
+    }
+
+    html5Qrcode
+      .start(
+        { facingMode: 'environment' }, // back camera
+        { fps: 10, qrbox: 300 },
+        qrCodeSuccessCallback,
+        (errorMessage) => {
+          // Called for each scan failure (optional)
+          console.warn('QR scan error:', errorMessage)
+        }
+      )
+      .catch((err) => {
+        console.warn('Camera start failed:', err)
+        setError('Camera access failed. Please upload an image with QR code.')
+      })
 
     return () => {
-      scanner.clear().catch((e) => console.error('Failed to stop scanner', e))
+      html5Qrcode.stop().catch(() => { })
     }
-  }, [])
+  }, [scannerStarted])
 
   const handleMarkUsed = async () => {
     if (!ticket) return
@@ -62,6 +74,31 @@ export default function ScanPage() {
     }
   }
 
+  const handleFileScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return
+    const file = e.target.files[0]
+    const html5Qrcode = new Html5Qrcode('reader')
+    try {
+      const decodedText = await html5Qrcode.scanFile(file, true)
+      const res = await fetch('/api/scan-ticket', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticket_id: decodedText }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'Something went wrong')
+        setTicket(null)
+      } else {
+        setTicket(data.ticket)
+        setError(null)
+      }
+    } catch (err) {
+      console.error('File scan error:', err)
+      setError('Failed to scan QR code from file.')
+    }
+  }
+
   const getThemeColor = () => {
     if (ticket?.status === 'CONFIRMED') return 'bg-green-900 text-green-300'
     if (ticket?.status === 'USED') return 'bg-red-900 text-red-300'
@@ -73,11 +110,29 @@ export default function ScanPage() {
       <div className="max-w-md w-full bg-[#1a1a1a] shadow-xl rounded-2xl p-6 space-y-6 border border-[#E0AF41]">
         <h1 className="text-2xl font-bold text-center text-[#E0AF41]">Scan Ticket QR</h1>
 
+        {/* Start Scanner Button */}
+        {!scannerStarted && (
+          <button
+            onClick={() => setScannerStarted(true)}
+            className="w-full bg-[#E0AF41] hover:bg-yellow-500 text-black font-semibold py-2 rounded-xl transition-all duration-300 shadow-md"
+          >
+            Start Scanner
+          </button>
+        )}
+
+        {/* File Upload Fallback */}
+        <label className="w-full mt-2 block bg-[#E0AF41] hover:bg-yellow-500 text-black font-semibold py-2 text-center rounded-xl cursor-pointer">
+          Upload QR Image
+          <input type="file" accept="image/*" className="hidden" onChange={handleFileScan} />
+        </label>
+
         {/* Scanner Box */}
-        <div className="relative w-full h-[386px] border-4 border-dashed border-[#E0AF41] rounded-xl overflow-hidden flex items-center justify-center bg-gray-900">
-          <div id="reader" className="absolute w-full h-full" />
-          <div className="absolute top-0 left-0 w-full h-full animate-pulse border-t-2 border-[#E0AF41]"></div>
-        </div>
+        {scannerStarted && (
+          <div className="relative w-full h-[386px] border-4 border-dashed border-[#E0AF41] rounded-xl overflow-hidden flex items-center justify-center bg-gray-900">
+            <div id="reader" className="absolute w-full h-full" />
+            <div className="absolute top-0 left-0 w-full h-full animate-pulse border-t-2 border-[#E0AF41]"></div>
+          </div>
+        )}
 
         {/* Error */}
         {error && <p className="text-red-400 text-center font-medium">{error}</p>}
