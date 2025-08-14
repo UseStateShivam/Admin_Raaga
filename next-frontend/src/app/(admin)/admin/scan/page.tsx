@@ -2,6 +2,7 @@
 
 import { Html5QrcodeScanner } from 'html5-qrcode'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 type Ticket = {
   name: string
@@ -15,6 +16,7 @@ type Ticket = {
 }
 
 export default function ScanPage() {
+  const router = useRouter()
   const [ticket, setTicket] = useState<Ticket | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -90,6 +92,15 @@ export default function ScanPage() {
                 className="mt-4 bg-[#E0AF41] text-black font-semibold px-4 py-2 rounded hover:bg-yellow-500 transition"
               >
                 Mark as Used
+              </button>
+            )}
+
+            {ticket.status === 'USED' && (
+              <button
+                onClick={() => router.push('/admin/scan')}
+                className="mt-4 bg-[#E0AF41] text-black font-semibold px-4 py-2 rounded hover:bg-yellow-500 transition"
+              >
+                Go Back
               </button>
             )}
           </div>
