@@ -63,7 +63,7 @@ export default function ScanPage() {
           setError(null)
         }
       } catch (err) {
-        setError('Failed to fetch ticket info.')
+        setError('Failed to fetch ticket info.' + err)
         setTicket(null)
       }
     }
