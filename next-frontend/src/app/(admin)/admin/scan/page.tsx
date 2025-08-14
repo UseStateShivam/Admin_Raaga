@@ -1,6 +1,6 @@
 'use client'
 
-import { Html5QrcodeScanner } from 'html5-qrcode'
+import { Html5Qrcode, Html5QrcodeScanner } from 'html5-qrcode'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
@@ -21,33 +21,44 @@ export default function ScanPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const scanner = new Html5QrcodeScanner('reader', { fps: 10, qrbox: 250 }, false)
+    let scanner: Html5QrcodeScanner
 
-    scanner.render(
-      async (decodedText) => {
-        scanner.clear()
-        const res = await fetch('/api/scan-ticket', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ticket_id: decodedText }),
-        })
+    Html5Qrcode.getCameras()
+      .then((devices: any[]) => {
+        if (devices && devices.length) {
+          // Try to select the back camera (environment)
+          const backCamera = devices.find((d) =>
+            d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('rear')
+          ) || devices[0] // fallback to first camera
 
-        const data = await res.json()
-        if (!res.ok) {
-          setError(data.error || 'Something went wrong')
-          setTicket(null)
-        } else {
-          setTicket(data.ticket)
-          setError(null)
+          scanner = new Html5QrcodeScanner(backCamera.id, { fps: 10, qrbox: 250 }, false)
+
+          scanner.render(
+            async (decodedText) => {
+              scanner.clear()
+              const res = await fetch('/api/scan-ticket', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ticket_id: decodedText }),
+              })
+
+              const data = await res.json()
+              if (!res.ok) {
+                setError(data.error || 'Something went wrong')
+                setTicket(null)
+              } else {
+                setTicket(data.ticket)
+                setError(null)
+              }
+            },
+            (err) => console.warn('QR scan error:', err)
+          )
         }
-      },
-      (err) => {
-        console.warn('QR scan error:', err)
-      }
-    )
+      })
+      .catch((err: Error) => console.error('Failed to get cameras', err))
 
     return () => {
-      scanner.clear().catch((e) => console.error('Failed to stop scanner', e))
+      scanner?.clear().catch((e) => console.error('Failed to stop scanner', e))
     }
   }, [])
 
