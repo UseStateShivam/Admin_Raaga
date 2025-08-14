@@ -97,7 +97,7 @@ export default function ScanPage() {
 
             {ticket.status === 'USED' && (
               <button
-                onClick={() => router.push('/admin/scan')}
+                onClick={() => window.location.reload()}
                 className="mt-4 bg-[#E0AF41] text-black font-semibold px-4 py-2 rounded hover:bg-yellow-500 transition"
               >
                 Go Back
