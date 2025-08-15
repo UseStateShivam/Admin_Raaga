@@ -20,22 +20,23 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (ticketError || !ticket) {
-    return NextResponse.json({ error: ticketError }, { status: 404 })
+    console.log('Ticket not found' + ticketError)
+    return NextResponse.json({ error: ticketError }, { status: 400 })
   }
 
   // 2. Load Ticket PDF template from Supabase Storage
   if (ticket.category === 'SILVER') {
-    templateUrl = 'https://ysguytfjamrjqpioovfu.supabase.co/storage/v1/object/public/qr-codes/Nirvana-Silver-Ticket-Template.pdf'
+    templateUrl = 'https://api.raagaexperience.com/storage/v1/object/public/qr-codes/Nirvana-Silver-Ticket-Template.pdf'
   } else if (ticket.category === 'SILVER PLUS') {
-    templateUrl = 'https://ysguytfjamrjqpioovfu.supabase.co/storage/v1/object/public/qr-codes/Nirvana-Silver-Plus-Ticket-Template.pdf'
+    templateUrl = 'https://api.raagaexperience.com/storage/v1/object/public/qr-codes/Nirvana-Silver-Plus-Ticket-Template.pdf'
   } else if (ticket.category === 'GOLD') {
-    templateUrl = 'https://ysguytfjamrjqpioovfu.supabase.co/storage/v1/object/public/qr-codes/Nirvana-Gold-Ticket-Template.pdf'
+    templateUrl = 'https://api.raagaexperience.com/storage/v1/object/public/qr-codes/Nirvana-Gold-Ticket-Template.pdf'
   } else if (ticket.category === 'GOLD PLUS') {
-    templateUrl = 'https://ysguytfjamrjqpioovfu.supabase.co/storage/v1/object/public/qr-codes/Nirvana-Gold-Plus-Ticket-Template.pdf'
+    templateUrl = 'https://api.raagaexperience.com/storage/v1/object/public/qr-codes/Nirvana-Gold-Plus-Ticket-Template.pdf'
   } else if (ticket.category === 'DIAMOND') {
-    templateUrl = 'https://ysguytfjamrjqpioovfu.supabase.co/storage/v1/object/public/qr-codes/Nirvana-Diamond-Ticket-Template.pdf'
+    templateUrl = 'https://api.raagaexperience.com/storage/v1/object/public/qr-codes/Nirvana-Diamond-Ticket-Template.pdf'
   } else if (ticket.category === 'PLATINUM') {
-    templateUrl = 'https://ysguytfjamrjqpioovfu.supabase.co/storage/v1/object/public/qr-codes/Nirvana-Platinum-Ticket-Template.pdf'
+    templateUrl = 'https://api.raagaexperience.com/storage/v1/object/public/qr-codes/Nirvana-Platinum-Ticket-Template.pdf'
   }
 
   if (templateUrl === '') {
